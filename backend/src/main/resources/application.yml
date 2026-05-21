@@ -1,0 +1,10 @@
+# spring:
+#   application:
+#     name: backend
+#   # 默认激活 dev 配置（可按需修改或在运行时覆盖）
+#   profiles:
+#     active: dev
+
+spring:
+  profiles:
+    active: dev # 👈 激活开发环境
