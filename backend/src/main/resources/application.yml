@@ -14,3 +14,5 @@ app:
     secret: "minitiktok_dev_secret_key_should_be_at_least_32_chars"
     expire-seconds: 7200
     issuer: "little-tiktok"
+  monitor:
+    slow-threshold-ms: 500

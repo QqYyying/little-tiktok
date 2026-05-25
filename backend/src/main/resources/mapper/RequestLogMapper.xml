@@ -12,6 +12,7 @@
         <result property="inputData" column="input_data"/>
         <result property="outputData" column="output_data"/>
         <result property="costTime" column="cost_time"/>
+        <result property="isSlow" column="is_slow"/>
         <result property="httpStatus" column="http_status"/>
         <result property="success" column="success"/>
         <result property="errorCode" column="error_code"/>
@@ -22,11 +23,11 @@
     <insert id="insert" parameterType="com.tiktok.log.entity.RequestLog">
         INSERT INTO request_log (
             id, request_id, user_id, interface_name, method, path,
-            input_data, output_data, cost_time, http_status, success,
+            input_data, output_data, cost_time, is_slow, http_status, success,
             error_code, client_ip, created_at
         ) VALUES (
             #{id}, #{requestId}, #{userId}, #{interfaceName}, #{method}, #{path},
-            #{inputData}, #{outputData}, #{costTime}, #{httpStatus}, #{success},
+            #{inputData}, #{outputData}, #{costTime}, #{isSlow}, #{httpStatus}, #{success},
             #{errorCode}, #{clientIp}, #{createdAt}
         )
     </insert>

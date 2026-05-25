@@ -13,6 +13,7 @@ public class RequestLog {
     private String inputData;
     private String outputData;
     private Long costTime;
+    private Boolean isSlow;
     private Integer httpStatus;
     private Boolean success;
     private String errorCode;
@@ -89,6 +90,14 @@ public class RequestLog {
 
     public void setCostTime(Long costTime) {
         this.costTime = costTime;
+    }
+
+    public Boolean getIsSlow() {
+        return isSlow;
+    }
+
+    public void setIsSlow(Boolean isSlow) {
+        this.isSlow = isSlow;
     }
 
     public Integer getHttpStatus() {

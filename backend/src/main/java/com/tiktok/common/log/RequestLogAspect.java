@@ -20,6 +20,7 @@ import org.aspectj.lang.reflect.CodeSignature;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.Model;
@@ -64,13 +65,17 @@ public class RequestLogAspect {
 
     private final RequestLogService requestLogService;
     private final SensitiveDataMasker sensitiveDataMasker;
+    private final long slowThresholdMs;
 
-    public RequestLogAspect(RequestLogService requestLogService, SensitiveDataMasker sensitiveDataMasker) {
+    public RequestLogAspect(RequestLogService requestLogService,
+                            SensitiveDataMasker sensitiveDataMasker,
+                            @Value("${app.monitor.slow-threshold-ms:500}") long slowThresholdMs) {
         this.requestLogService = requestLogService;
         this.sensitiveDataMasker = sensitiveDataMasker;
+        this.slowThresholdMs = slowThresholdMs;
     }
 
-    @Around("execution(public * com.tiktok..controller..*.*(..))")
+    @Around("execution(public * com.tiktok..controller..*.*(..)) || execution(public * com.tiktok.common.debug..*Controller.*(..))")
     public Object logController(ProceedingJoinPoint joinPoint) throws Throwable {
         long startTime = System.currentTimeMillis();
         Object result = null;
@@ -117,6 +122,7 @@ public class RequestLogAspect {
             requestLog.setInterfaceName(getInterfaceName(joinPoint));
             requestLog.setInputData(sensitiveDataMasker.toMaskedJson(getInputData(joinPoint)));
             fillResult(requestLog, response, result, error);
+            logPerfAlertIfSlow(requestLog);
             requestLogService.save(requestLog);
             markLogged(request);
         } catch (Exception e) {
@@ -136,6 +142,7 @@ public class RequestLogAspect {
             requestLog.setInterfaceName(getHandlerInterfaceName(args.length > 2 ? args[2] : null));
             requestLog.setInputData(sensitiveDataMasker.toMaskedJson(getRequestParameters(request)));
             fillResult(requestLog, response, null, error);
+            logPerfAlertIfSlow(requestLog);
             requestLogService.save(requestLog);
             markLogged(request);
         } catch (Exception e) {
@@ -158,6 +165,7 @@ public class RequestLogAspect {
             requestLog.setInterfaceName(getHandlerInterfaceName(request == null ? null : request.getAttribute(HandlerMapping.BEST_MATCHING_HANDLER_ATTRIBUTE)));
             requestLog.setInputData(sensitiveDataMasker.toMaskedJson(getRequestParameters(request)));
             fillResult(requestLog, response, result, error);
+            logPerfAlertIfSlow(requestLog);
             requestLogService.save(requestLog);
             markLogged(request);
         } catch (Exception e) {
@@ -174,9 +182,24 @@ public class RequestLogAspect {
         requestLog.setPath(request == null ? null : request.getRequestURI());
         requestLog.setClientIp(getClientIp(request));
         requestLog.setHttpStatus(response == null ? DEFAULT_SUCCESS_STATUS : response.getStatus());
-        requestLog.setCostTime(System.currentTimeMillis() - startTime);
+        long costTime = System.currentTimeMillis() - startTime;
+        requestLog.setCostTime(costTime);
+        requestLog.setIsSlow(costTime > slowThresholdMs);
         requestLog.setCreatedAt(LocalDateTime.now());
         return requestLog;
+    }
+
+    private void logPerfAlertIfSlow(RequestLog requestLog) {
+        if (requestLog == null || !Boolean.TRUE.equals(requestLog.getIsSlow())) {
+            return;
+        }
+        log.warn("[PERF_ALERT] path={} method={} costTime={}ms threshold={}ms requestId={} userId={}",
+                requestLog.getPath(),
+                requestLog.getMethod(),
+                requestLog.getCostTime(),
+                slowThresholdMs,
+                requestLog.getRequestId(),
+                requestLog.getUserId());
     }
 
     private void fillResult(RequestLog requestLog, HttpServletResponse response, Object result, Throwable error) {
