@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tiktok.log.mapper.RequestLogMapper">
+
+    <resultMap id="RequestLogResultMap" type="com.tiktok.log.entity.RequestLog">
+        <id property="id" column="id"/>
+        <result property="requestId" column="request_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="interfaceName" column="interface_name"/>
+        <result property="method" column="method"/>
+        <result property="path" column="path"/>
+        <result property="inputData" column="input_data"/>
+        <result property="outputData" column="output_data"/>
+        <result property="costTime" column="cost_time"/>
+        <result property="httpStatus" column="http_status"/>
+        <result property="success" column="success"/>
+        <result property="errorCode" column="error_code"/>
+        <result property="clientIp" column="client_ip"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.tiktok.log.entity.RequestLog">
+        INSERT INTO request_log (
+            id, request_id, user_id, interface_name, method, path,
+            input_data, output_data, cost_time, http_status, success,
+            error_code, client_ip, created_at
+        ) VALUES (
+            #{id}, #{requestId}, #{userId}, #{interfaceName}, #{method}, #{path},
+            #{inputData}, #{outputData}, #{costTime}, #{httpStatus}, #{success},
+            #{errorCode}, #{clientIp}, #{createdAt}
+        )
+    </insert>
+</mapper>
