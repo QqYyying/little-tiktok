@@ -78,4 +78,46 @@
         ORDER BY created_at DESC
         LIMIT #{limit} OFFSET #{offset}
     </select>
+
+    <select id="selectApiMetrics" parameterType="com.tiktok.log.dto.ApiMetricsQueryRequest" resultType="com.tiktok.log.dto.ApiMetricsRecordResponse">
+        SELECT path,
+               method,
+               COUNT(*) AS requestCount,
+               SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) AS successCount,
+               SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END) AS failCount,
+               SUM(CASE WHEN is_slow = 1 THEN 1 ELSE 0 END) AS slowCount,
+               AVG(cost_time) AS avgCostTime,
+               MAX(cost_time) AS maxCostTime,
+               MIN(cost_time) AS minCostTime
+        FROM request_log
+        <where>
+            <if test="startDateTime != null">
+                AND created_at &gt;= #{startDateTime}
+            </if>
+            <if test="endDateTime != null">
+                AND created_at &lt;= #{endDateTime}
+            </if>
+            <if test="path != null and path != ''">
+                AND path LIKE CONCAT('%', #{path}, '%')
+            </if>
+            <if test="method != null and method != ''">
+                AND method = #{method}
+            </if>
+            <if test="includeAdmin != null and includeAdmin == false">
+                AND path NOT LIKE '/api/v1/admin/%'
+            </if>
+        </where>
+        GROUP BY path, method
+        HAVING COUNT(*) &gt;= #{minCount}
+        ORDER BY
+        <choose>
+            <when test="orderByColumn == 'max_cost_time'">maxCostTime</when>
+            <when test="orderByColumn == 'request_count'">requestCount</when>
+            <when test="orderByColumn == 'slow_count'">slowCount</when>
+            <when test="orderByColumn == 'fail_count'">failCount</when>
+            <otherwise>avgCostTime</otherwise>
+        </choose>
+        DESC
+        LIMIT #{limit}
+    </select>
 </mapper>

@@ -2,6 +2,8 @@ package com.tiktok.admin.controller;
 
 import com.tiktok.common.auth.PermissionUtils;
 import com.tiktok.common.auth.UserContext;
+import com.tiktok.log.dto.ApiMetricsQueryRequest;
+import com.tiktok.log.dto.ApiMetricsResponse;
 import com.tiktok.log.dto.RequestLogPageQuery;
 import com.tiktok.log.dto.RequestLogPageResponse;
 import com.tiktok.log.service.RequestLogAdminService;
@@ -26,6 +28,12 @@ public class AdminController {
     public RequestLogPageResponse requestLogs(RequestLogPageQuery query) {
         PermissionUtils.requireAdmin();
         return requestLogAdminService.pageRequestLogs(query);
+    }
+
+    @GetMapping("/api-metrics")
+    public ApiMetricsResponse apiMetrics(ApiMetricsQueryRequest query) {
+        PermissionUtils.requireAdmin();
+        return requestLogAdminService.getApiMetrics(query);
     }
 
     @GetMapping("/ping")

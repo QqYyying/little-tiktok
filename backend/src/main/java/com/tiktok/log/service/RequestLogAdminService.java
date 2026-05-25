@@ -3,6 +3,9 @@ package com.tiktok.log.service;
 import com.tiktok.common.auth.PermissionUtils;
 import com.tiktok.common.enums.ErrorCode;
 import com.tiktok.common.exception.BizException;
+import com.tiktok.log.dto.ApiMetricsQueryRequest;
+import com.tiktok.log.dto.ApiMetricsRecordResponse;
+import com.tiktok.log.dto.ApiMetricsResponse;
 import com.tiktok.log.dto.RequestLogPageQuery;
 import com.tiktok.log.dto.RequestLogPageResponse;
 import com.tiktok.log.dto.RequestLogRecordResponse;
@@ -21,6 +24,10 @@ public class RequestLogAdminService {
     private static final int DEFAULT_PAGE = 1;
     private static final int DEFAULT_PAGE_SIZE = 10;
     private static final int MAX_PAGE_SIZE = 100;
+    private static final int DEFAULT_METRICS_LIMIT = 20;
+    private static final int MAX_METRICS_LIMIT = 100;
+    private static final int DEFAULT_MIN_COUNT = 1;
+    private static final String SORT_BY_AVG_COST_TIME = "avgCostTime";
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private final RequestLogMapper requestLogMapper;
@@ -46,6 +53,20 @@ public class RequestLogAdminService {
         return response;
     }
 
+    public ApiMetricsResponse getApiMetrics(ApiMetricsQueryRequest query) {
+        PermissionUtils.requireAdmin();
+        ApiMetricsQueryRequest normalizedQuery = normalizeMetricsQuery(query == null ? new ApiMetricsQueryRequest() : query);
+        List<ApiMetricsRecordResponse> records = requestLogMapper.selectApiMetrics(normalizedQuery);
+        records.forEach(this::fillRates);
+
+        ApiMetricsResponse response = new ApiMetricsResponse();
+        response.setStartTime(formatDateTime(normalizedQuery.getStartDateTime()));
+        response.setEndTime(formatDateTime(normalizedQuery.getEndDateTime()));
+        response.setTotalApis(records.size());
+        response.setRecords(records);
+        return response;
+    }
+
     private RequestLogPageQuery normalize(RequestLogPageQuery query) {
         int page = query.getPage() == null || query.getPage() < 1 ? DEFAULT_PAGE : query.getPage();
         int pageSize = query.getPageSize() == null || query.getPageSize() < 1 ? DEFAULT_PAGE_SIZE : query.getPageSize();
@@ -62,6 +83,57 @@ public class RequestLogAdminService {
         query.setStartDateTime(parseDateTime(query.getStartTime(), "startTime"));
         query.setEndDateTime(parseDateTime(query.getEndTime(), "endTime"));
         return query;
+    }
+
+    private ApiMetricsQueryRequest normalizeMetricsQuery(ApiMetricsQueryRequest query) {
+        query.setStartDateTime(parseDateTime(query.getStartTime(), "startTime"));
+        query.setEndDateTime(parseDateTime(query.getEndTime(), "endTime"));
+        query.setMethod(normalizeUpper(query.getMethod()));
+        query.setIncludeAdmin(query.getIncludeAdmin() == null || query.getIncludeAdmin());
+        query.setMinCount(query.getMinCount() == null || query.getMinCount() < 1 ? DEFAULT_MIN_COUNT : query.getMinCount());
+
+        int limit = query.getLimit() == null || query.getLimit() < 1 ? DEFAULT_METRICS_LIMIT : query.getLimit();
+        query.setLimit(Math.min(limit, MAX_METRICS_LIMIT));
+        query.setSortBy(normalizeSortBy(query.getSortBy()));
+        query.setOrderByColumn(toOrderByColumn(query.getSortBy()));
+        return query;
+    }
+
+    private String normalizeSortBy(String sortBy) {
+        if (!hasText(sortBy)) {
+            return SORT_BY_AVG_COST_TIME;
+        }
+        return switch (sortBy.trim()) {
+            case "avgCostTime", "maxCostTime", "requestCount", "slowCount", "failCount" -> sortBy.trim();
+            default -> SORT_BY_AVG_COST_TIME;
+        };
+    }
+
+    private String toOrderByColumn(String sortBy) {
+        return switch (sortBy) {
+            case "maxCostTime" -> "max_cost_time";
+            case "requestCount" -> "request_count";
+            case "slowCount" -> "slow_count";
+            case "failCount" -> "fail_count";
+            default -> "avg_cost_time";
+        };
+    }
+
+    private void fillRates(ApiMetricsRecordResponse record) {
+        long requestCount = record.getRequestCount() == null ? 0 : record.getRequestCount();
+        if (requestCount <= 0) {
+            record.setSuccessRate(0.0);
+            record.setSlowRate(0.0);
+            return;
+        }
+        long successCount = record.getSuccessCount() == null ? 0 : record.getSuccessCount();
+        long slowCount = record.getSlowCount() == null ? 0 : record.getSlowCount();
+        record.setSuccessRate((double) successCount / requestCount);
+        record.setSlowRate((double) slowCount / requestCount);
+    }
+
+    private String formatDateTime(LocalDateTime dateTime) {
+        return dateTime == null ? null : DATE_TIME_FORMATTER.format(dateTime);
     }
 
     private Boolean parseBoolean(String value, String fieldName) {
