@@ -20,6 +20,38 @@
         <result property="createdAt" column="created_at"/>
     </resultMap>
 
+    <sql id="QueryWhere">
+        <where>
+            <if test="userId != null and userId != ''">
+                AND user_id = #{userId}
+            </if>
+            <if test="requestId != null and requestId != ''">
+                AND request_id = #{requestId}
+            </if>
+            <if test="path != null and path != ''">
+                AND path LIKE CONCAT('%', #{path}, '%')
+            </if>
+            <if test="method != null and method != ''">
+                AND method = #{method}
+            </if>
+            <if test="successValue != null">
+                AND success = #{successValue}
+            </if>
+            <if test="isSlowValue != null">
+                AND is_slow = #{isSlowValue}
+            </if>
+            <if test="errorCode != null and errorCode != ''">
+                AND error_code = #{errorCode}
+            </if>
+            <if test="startDateTime != null">
+                AND created_at &gt;= #{startDateTime}
+            </if>
+            <if test="endDateTime != null">
+                AND created_at &lt;= #{endDateTime}
+            </if>
+        </where>
+    </sql>
+
     <insert id="insert" parameterType="com.tiktok.log.entity.RequestLog">
         INSERT INTO request_log (
             id, request_id, user_id, interface_name, method, path,
@@ -31,4 +63,19 @@
             #{errorCode}, #{clientIp}, #{createdAt}
         )
     </insert>
+
+    <select id="countByQuery" parameterType="com.tiktok.log.dto.RequestLogPageQuery" resultType="long">
+        SELECT COUNT(1)
+        FROM request_log
+        <include refid="QueryWhere"/>
+    </select>
+
+    <select id="selectPageByQuery" parameterType="com.tiktok.log.dto.RequestLogPageQuery" resultMap="RequestLogResultMap">
+        SELECT id, request_id, user_id, interface_name, method, path,
+               cost_time, is_slow, http_status, success, error_code, client_ip, created_at
+        FROM request_log
+        <include refid="QueryWhere"/>
+        ORDER BY created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
 </mapper>
