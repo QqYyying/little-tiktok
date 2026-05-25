@@ -5,12 +5,12 @@ API设计与实现期末大作业 - 简易版抖音
 - Node.js 18+ 版本
 
 ## 前端启动步骤
-### 安装依赖
 ```bash
+安装依赖
 pnpm install
-### 放行构建脚本
+放行构建脚本
 pnpm approve-builds
-### 启动开发服务
+启动开发服务
 pnpm dev
 ```
 ### 接口配置
