@@ -75,7 +75,7 @@ public class RequestLogAspect {
         this.slowThresholdMs = slowThresholdMs;
     }
 
-    @Around("execution(public * com.tiktok..controller..*.*(..)) || execution(public * com.tiktok.common.debug..*Controller.*(..))")
+    @Around("execution(public * com.tiktok..controller..*.*(..))")
     public Object logController(ProceedingJoinPoint joinPoint) throws Throwable {
         long startTime = System.currentTimeMillis();
         Object result = null;
