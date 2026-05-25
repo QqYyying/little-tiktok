@@ -1,5 +1,6 @@
 package com.tiktok.user.service;
 
+import com.tiktok.common.auth.JwtUtil;
 import com.tiktok.common.enums.ErrorCode;
 import com.tiktok.common.exception.BizException;
 import com.tiktok.user.dto.LoginRequest;
@@ -25,10 +26,12 @@ public class AuthService {
 
     private final UserMapper userMapper;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
-    public AuthService(UserMapper userMapper, BCryptPasswordEncoder passwordEncoder) {
+    public AuthService(UserMapper userMapper, BCryptPasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
+        this.jwtUtil = jwtUtil;
     }
 
     @Transactional
@@ -88,7 +91,7 @@ public class AuthService {
         response.setUsername(user.getUsername());
         response.setStatus(user.getStatus());
         response.setRole(user.getRole());
-        response.setToken(null); // T6 接入 JWT 后替换为真实 token。
+        response.setToken(jwtUtil.generateToken(user.getId(), user.getUsername(), user.getRole()));
         return response;
     }
 }

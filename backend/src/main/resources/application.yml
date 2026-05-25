@@ -8,3 +8,9 @@
 spring:
   profiles:
     active: dev # 👈 激活开发环境
+
+app:
+  jwt:
+    secret: "minitiktok_dev_secret_key_should_be_at_least_32_chars"
+    expire-seconds: 7200
+    issuer: "little-tiktok"
