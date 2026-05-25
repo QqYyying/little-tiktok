@@ -26,7 +26,7 @@ public class SecurityConfig {
                                 "/api/v1/auth/login",
                                 "/actuator/health"
                         ).permitAll()
-                        // 临时配置：T7 实现 JWT / AuthInterceptor 后再收紧权限。
+                        // 课程项目使用 MVC AuthInterceptor 做 JWT 鉴权，Spring Security 仅关闭默认拦截。
                         .anyRequest().permitAll()
                 );
 
