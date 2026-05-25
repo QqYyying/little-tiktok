@@ -1,13 +1,17 @@
 package com.tiktok.user.service;
 
 import com.tiktok.common.auth.JwtUtil;
+import com.tiktok.common.auth.UserContext;
 import com.tiktok.common.enums.ErrorCode;
 import com.tiktok.common.exception.BizException;
 import com.tiktok.user.dto.LoginRequest;
 import com.tiktok.user.dto.LoginResponse;
+import com.tiktok.user.dto.LogoutResponse;
 import com.tiktok.user.dto.RegisterRequest;
 import com.tiktok.user.dto.RegisterResponse;
+import com.tiktok.user.entity.TokenBlacklist;
 import com.tiktok.user.entity.User;
+import com.tiktok.user.mapper.TokenBlacklistMapper;
 import com.tiktok.user.mapper.UserMapper;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -25,11 +29,16 @@ public class AuthService {
     private static final String INVALID_CREDENTIALS_MESSAGE = "用户名或密码错误";
 
     private final UserMapper userMapper;
+    private final TokenBlacklistMapper tokenBlacklistMapper;
     private final BCryptPasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
-    public AuthService(UserMapper userMapper, BCryptPasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
+    public AuthService(UserMapper userMapper,
+                       TokenBlacklistMapper tokenBlacklistMapper,
+                       BCryptPasswordEncoder passwordEncoder,
+                       JwtUtil jwtUtil) {
         this.userMapper = userMapper;
+        this.tokenBlacklistMapper = tokenBlacklistMapper;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
     }
@@ -72,6 +81,22 @@ public class AuthService {
             throw new BizException(ErrorCode.PERMISSION_DENIED, "账号状态异常，无法登录");
         }
         return toLoginResponse(user);
+    }
+
+    public LogoutResponse logout(String authorizationHeader) {
+        String token = jwtUtil.extractBearerToken(authorizationHeader);
+        if (tokenBlacklistMapper.existsByToken(token) == 0) {
+            TokenBlacklist tokenBlacklist = new TokenBlacklist();
+            tokenBlacklist.setToken(token);
+            tokenBlacklist.setUserId(UserContext.getCurrentUserId());
+            tokenBlacklist.setExpireAt(jwtUtil.getExpireAt(token));
+            tokenBlacklist.setCreatedAt(LocalDateTime.now());
+            tokenBlacklistMapper.insert(tokenBlacklist);
+        }
+        LogoutResponse response = new LogoutResponse();
+        response.setSuccess(true);
+        response.setMessage("退出登录成功");
+        return response;
     }
 
     private RegisterResponse toRegisterResponse(User user) {
