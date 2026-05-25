@@ -27,7 +27,7 @@ public final class PermissionUtils {
 
     public static boolean isOwner(String ownerId) {
         requireLogin();
-        if (ownerId == null) {
+        if (ownerId == null || ownerId.isBlank()) {
             return false;
         }
         return ownerId.equals(UserContext.getCurrentUserId());
@@ -35,7 +35,7 @@ public final class PermissionUtils {
 
     public static boolean isOwnerOrAdmin(String ownerId) {
         requireLogin();
-        if (ownerId == null) {
+        if (ownerId == null || ownerId.isBlank()) {
             return false;
         }
         return ownerId.equals(UserContext.getCurrentUserId()) || ADMIN_ROLE.equals(UserContext.getCurrentRole());
