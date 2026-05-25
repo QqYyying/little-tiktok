@@ -24,7 +24,8 @@ public class SecurityConfig {
                                 "/debug/exceptions/**",
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/login",
-                                "/actuator/health"
+                                "/actuator/health",
+                                "/actuator/info"
                         ).permitAll()
                         // 课程项目使用 MVC AuthInterceptor 做 JWT 鉴权，Spring Security 仅关闭默认拦截。
                         .anyRequest().permitAll()

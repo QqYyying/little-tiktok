@@ -16,3 +16,21 @@ app:
     issuer: "little-tiktok"
   monitor:
     slow-threshold-ms: 500
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: never
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: little-tiktok
+    description: API big homework mini tiktok backend
+    version: 1.0.0
