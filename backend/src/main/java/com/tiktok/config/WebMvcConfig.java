@@ -26,8 +26,11 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/actuator/health",
                         "/actuator/info",
                         "/actuator/prometheus",
-                        "/swagger-ui/**",
+                        "/v3/api-docs",
                         "/v3/api-docs/**",
+                        "/swagger-ui/**",
+                        "/swagger-ui.html",
+                        "/swagger-ui/index.html",
                         "/doc.html",
                         "/webjars/**"
                 );

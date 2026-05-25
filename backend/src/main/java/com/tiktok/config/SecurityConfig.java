@@ -25,7 +25,12 @@ public class SecurityConfig {
                                 "/api/v1/auth/login",
                                 "/actuator/health",
                                 "/actuator/info",
-                                "/actuator/prometheus"
+                                "/actuator/prometheus",
+                                "/v3/api-docs",
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/swagger-ui/index.html"
                         ).permitAll()
                         // 课程项目使用 MVC AuthInterceptor 做 JWT 鉴权，Spring Security 仅关闭默认拦截。
                         .anyRequest().permitAll()
