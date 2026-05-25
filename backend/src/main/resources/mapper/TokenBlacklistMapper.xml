@@ -23,8 +23,8 @@
         WHERE token = #{token}
     </select>
 
-    <insert id="insert" parameterType="com.tiktok.user.entity.TokenBlacklist" useGeneratedKeys="true" keyProperty="id">
-        INSERT IGNORE INTO token_blacklist (token, user_id, expire_at, created_at)
-        VALUES (#{token}, #{userId}, #{expireAt}, #{createdAt})
+    <insert id="insert" parameterType="com.tiktok.user.entity.TokenBlacklist">
+        INSERT IGNORE INTO token_blacklist (id, token, user_id, expire_at, created_at)
+        VALUES (#{id}, #{token}, #{userId}, #{expireAt}, #{createdAt})
     </insert>
 </mapper>

@@ -36,7 +36,7 @@ public final class RequestIdUtil {
             return requestId;
         }
 
-        requestId = "req_" + SnowflakeIdGenerator.nextId();
+        requestId = ResourceIdUtil.nextRequestId();
         setRequestId(requestId);
         return requestId;
     }

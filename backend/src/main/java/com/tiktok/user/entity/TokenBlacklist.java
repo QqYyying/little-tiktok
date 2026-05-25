@@ -4,17 +4,17 @@ import java.time.LocalDateTime;
 
 public class TokenBlacklist {
 
-    private Long id;
+    private String id;
     private String token;
-    private Long userId;
+    private String userId;
     private LocalDateTime expireAt;
     private LocalDateTime createdAt;
 
-    public Long getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(String id) {
         this.id = id;
     }
 
@@ -26,11 +26,11 @@ public class TokenBlacklist {
         this.token = token;
     }
 
-    public Long getUserId() {
+    public String getUserId() {
         return userId;
     }
 
-    public void setUserId(Long userId) {
+    public void setUserId(String userId) {
         this.userId = userId;
     }
 

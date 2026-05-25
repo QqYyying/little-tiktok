@@ -18,7 +18,7 @@ public final class UserContext {
         CURRENT_USER.set(userInfo);
     }
 
-    public static Long getCurrentUserId() {
+    public static String getCurrentUserId() {
         return getCurrentUser().getUserId();
     }
 

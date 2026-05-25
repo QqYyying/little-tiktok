@@ -4,6 +4,7 @@ import com.tiktok.common.auth.JwtUtil;
 import com.tiktok.common.auth.UserContext;
 import com.tiktok.common.enums.ErrorCode;
 import com.tiktok.common.exception.BizException;
+import com.tiktok.common.utils.ResourceIdUtil;
 import com.tiktok.user.dto.CurrentUserResponse;
 import com.tiktok.user.dto.LoginRequest;
 import com.tiktok.user.dto.LoginResponse;
@@ -53,6 +54,7 @@ public class AuthService {
 
         LocalDateTime now = LocalDateTime.now();
         User user = new User();
+        user.setId(ResourceIdUtil.nextUserId());
         user.setUsername(username);
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setStatus(DEFAULT_STATUS);
@@ -83,6 +85,7 @@ public class AuthService {
         String token = jwtUtil.extractBearerToken(authorizationHeader);
         if (tokenBlacklistMapper.existsByToken(token) == 0) {
             TokenBlacklist tokenBlacklist = new TokenBlacklist();
+            tokenBlacklist.setId(ResourceIdUtil.nextTokenBlacklistId());
             tokenBlacklist.setToken(token);
             tokenBlacklist.setUserId(UserContext.getCurrentUserId());
             tokenBlacklist.setExpireAt(jwtUtil.getExpireAt(token));

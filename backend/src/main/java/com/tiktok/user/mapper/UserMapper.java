@@ -7,7 +7,7 @@ public interface UserMapper {
 
     User selectByUsername(@Param("username") String username);
 
-    User selectById(@Param("id") Long id);
+    User selectById(@Param("id") String id);
 
     int insert(User user);
 }

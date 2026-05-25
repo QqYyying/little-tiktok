@@ -26,8 +26,8 @@
         LIMIT 1
     </select>
 
-    <insert id="insert" parameterType="com.tiktok.user.entity.User" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO `user` (username, password_hash, status, role, created_at, updated_at)
-        VALUES (#{username}, #{passwordHash}, #{status}, #{role}, #{createdAt}, #{updatedAt})
+    <insert id="insert" parameterType="com.tiktok.user.entity.User">
+        INSERT INTO `user` (id, username, password_hash, status, role, created_at, updated_at)
+        VALUES (#{id}, #{username}, #{passwordHash}, #{status}, #{role}, #{createdAt}, #{updatedAt})
     </insert>
 </mapper>

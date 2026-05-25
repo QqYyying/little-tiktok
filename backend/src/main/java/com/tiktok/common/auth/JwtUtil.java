@@ -30,12 +30,12 @@ public class JwtUtil {
     private long expireSeconds = 7200;
     private String issuer = "little-tiktok";
 
-    public String generateToken(Long userId, String username, String role) {
+    public String generateToken(String userId, String username, String role) {
         Instant now = Instant.now();
         Instant expireAt = now.plusSeconds(expireSeconds);
         return Jwts.builder()
                 .issuer(issuer)
-                .subject(String.valueOf(userId))
+                .subject(userId)
                 .claim(USER_ID_CLAIM, userId)
                 .claim(USERNAME_CLAIM, username)
                 .claim(ROLE_CLAIM, role)
@@ -107,15 +107,12 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    private Long readUserId(Claims claims) {
+    private String readUserId(Claims claims) {
         Object userId = claims.get(USER_ID_CLAIM);
-        if (userId instanceof Number number) {
-            return number.longValue();
-        }
         if (userId instanceof String value && hasText(value)) {
-            return Long.parseLong(value);
+            return value;
         }
-        return Long.valueOf(claims.getSubject());
+        return claims.getSubject();
     }
 
     private LocalDateTime toLocalDateTime(Date date) {

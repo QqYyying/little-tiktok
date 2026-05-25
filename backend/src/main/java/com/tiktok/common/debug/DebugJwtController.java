@@ -34,18 +34,18 @@ public class DebugJwtController {
 
     public static class DebugJwtParseResponse {
 
-        private Long userId;
+        private String userId;
         private String username;
         private String role;
 
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         private LocalDateTime expireAt;
 
-        public Long getUserId() {
+        public String getUserId() {
             return userId;
         }
 
-        public void setUserId(Long userId) {
+        public void setUserId(String userId) {
             this.userId = userId;
         }
 

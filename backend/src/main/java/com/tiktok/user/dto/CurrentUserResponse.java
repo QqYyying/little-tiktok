@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 
 public class CurrentUserResponse {
 
-    private Long userId;
+    private String userId;
     private String username;
     private String status;
     private String role;
@@ -17,11 +17,11 @@ public class CurrentUserResponse {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updatedAt;
 
-    public Long getUserId() {
+    public String getUserId() {
         return userId;
     }
 
-    public void setUserId(Long userId) {
+    public void setUserId(String userId) {
         this.userId = userId;
     }
 
