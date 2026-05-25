@@ -2,6 +2,8 @@ package com.tiktok.user.service;
 
 import com.tiktok.common.enums.ErrorCode;
 import com.tiktok.common.exception.BizException;
+import com.tiktok.user.dto.LoginRequest;
+import com.tiktok.user.dto.LoginResponse;
 import com.tiktok.user.dto.RegisterRequest;
 import com.tiktok.user.dto.RegisterResponse;
 import com.tiktok.user.entity.User;
@@ -17,7 +19,9 @@ import java.time.LocalDateTime;
 public class AuthService {
 
     private static final String DEFAULT_STATUS = "ACTIVE";
+    private static final String BANNED_STATUS = "BANNED";
     private static final String DEFAULT_ROLE = "USER";
+    private static final String INVALID_CREDENTIALS_MESSAGE = "用户名或密码错误";
 
     private final UserMapper userMapper;
     private final BCryptPasswordEncoder passwordEncoder;
@@ -52,6 +56,21 @@ public class AuthService {
         return toRegisterResponse(user);
     }
 
+    public LoginResponse login(LoginRequest request) {
+        String username = request.getUsername().trim();
+        User user = userMapper.selectByUsername(username);
+        if (user == null || !passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+            throw new BizException(ErrorCode.UNAUTHORIZED, INVALID_CREDENTIALS_MESSAGE);
+        }
+        if (BANNED_STATUS.equals(user.getStatus())) {
+            throw new BizException(ErrorCode.PERMISSION_DENIED, "账号已被封禁");
+        }
+        if (!DEFAULT_STATUS.equals(user.getStatus())) {
+            throw new BizException(ErrorCode.PERMISSION_DENIED, "账号状态异常，无法登录");
+        }
+        return toLoginResponse(user);
+    }
+
     private RegisterResponse toRegisterResponse(User user) {
         RegisterResponse response = new RegisterResponse();
         response.setUserId(user.getId());
@@ -60,6 +79,16 @@ public class AuthService {
         response.setRole(user.getRole());
         response.setCreatedAt(user.getCreatedAt());
         response.setUpdatedAt(user.getUpdatedAt());
+        return response;
+    }
+
+    private LoginResponse toLoginResponse(User user) {
+        LoginResponse response = new LoginResponse();
+        response.setUserId(user.getId());
+        response.setUsername(user.getUsername());
+        response.setStatus(user.getStatus());
+        response.setRole(user.getRole());
+        response.setToken(null); // T6 接入 JWT 后替换为真实 token。
         return response;
     }
 }

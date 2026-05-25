@@ -8,11 +8,11 @@ SET FOREIGN_KEY_CHECKS = 0;
 
 -- 1. 导入初始测试用户 (密码采用标准 BCrypt 哈希密文)
 INSERT INTO `user` (`id`, `username`, `password_hash`, `status`, `created_at`) VALUES
-(1001, 'alex_coder', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7g92Ch9ZpU9v6Z2B4vjCkh6', 'ACTIVE', '2026-05-01 10:00:00'),
-(1002, 'bob_tech',   '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7g92Ch9ZpU9v6Z2B4vjCkh6', 'ACTIVE', '2026-05-02 11:15:00'),
-(1003, 'charlie_v',  '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7g92Ch9ZpU9v6Z2B4vjCkh6', 'ACTIVE', '2026-05-03 14:20:00'),
-(1004, 'david_buaa', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7g92Ch9ZpU9v6Z2B4vjCkh6', 'ACTIVE', '2026-05-04 09:05:00'),
-(1005, 'eva_star',   '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7g92Ch9ZpU9v6Z2B4vjCkh6', 'BANNED', '2026-05-05 16:40:00');
+(1001, 'alex_coder', '$2a$10$m38NCjCd91lGqo02p6xTC.Nq4CFdHFZSXJlM9TxhSsYEZLbV1Ywtq', 'ACTIVE', '2026-05-01 10:00:00'),
+(1002, 'bob_tech',   '$2a$10$m38NCjCd91lGqo02p6xTC.Nq4CFdHFZSXJlM9TxhSsYEZLbV1Ywtq', 'ACTIVE', '2026-05-02 11:15:00'),
+(1003, 'charlie_v',  '$2a$10$m38NCjCd91lGqo02p6xTC.Nq4CFdHFZSXJlM9TxhSsYEZLbV1Ywtq', 'ACTIVE', '2026-05-03 14:20:00'),
+(1004, 'david_buaa', '$2a$10$m38NCjCd91lGqo02p6xTC.Nq4CFdHFZSXJlM9TxhSsYEZLbV1Ywtq', 'ACTIVE', '2026-05-04 09:05:00'),
+(1005, 'eva_star',   '$2a$10$m38NCjCd91lGqo02p6xTC.Nq4CFdHFZSXJlM9TxhSsYEZLbV1Ywtq', 'BANNED', '2026-05-05 16:40:00');
 
 -- 2. 导入初始视频元数据 (规范化模拟 MinIO 的存储路径 Key)
 INSERT INTO `video` (`id`, `author_id`, `title`, `play_url`, `cover_url`, `like_count`, `status`, `created_at`) VALUES

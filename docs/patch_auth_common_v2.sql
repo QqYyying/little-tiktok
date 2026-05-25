@@ -40,6 +40,6 @@ ADD KEY `idx_path_created_at` (`path`, `created_at`);
 
 -- 4. 初始化管理员用户，密码是 123456 的 BCrypt 密文
 INSERT INTO `user` (`id`, `username`, `password_hash`, `status`, `role`, `created_at`) VALUES
-(1006, 'admin', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7g92Ch9ZpU9v6Z2B4vjCkh6', 'ACTIVE', 'ADMIN', '2026-05-21 10:00:00');
+(1006, 'admin', '$2a$10$m38NCjCd91lGqo02p6xTC.Nq4CFdHFZSXJlM9TxhSsYEZLbV1Ywtq', 'ACTIVE', 'ADMIN', '2026-05-21 10:00:00');
 
 SET FOREIGN_KEY_CHECKS = 1;

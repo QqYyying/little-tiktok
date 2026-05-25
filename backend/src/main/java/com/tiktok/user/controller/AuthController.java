@@ -1,5 +1,7 @@
 package com.tiktok.user.controller;
 
+import com.tiktok.user.dto.LoginRequest;
+import com.tiktok.user.dto.LoginResponse;
 import com.tiktok.user.dto.RegisterRequest;
 import com.tiktok.user.dto.RegisterResponse;
 import com.tiktok.user.service.AuthService;
@@ -22,5 +24,10 @@ public class AuthController {
     @PostMapping("/register")
     public RegisterResponse register(@Valid @RequestBody RegisterRequest request) {
         return authService.register(request);
+    }
+
+    @PostMapping("/login")
+    public LoginResponse login(@Valid @RequestBody LoginRequest request) {
+        return authService.login(request);
     }
 }
