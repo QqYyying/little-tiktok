@@ -4,6 +4,7 @@ import com.tiktok.common.auth.JwtUtil;
 import com.tiktok.common.auth.UserContext;
 import com.tiktok.common.enums.ErrorCode;
 import com.tiktok.common.exception.BizException;
+import com.tiktok.user.dto.CurrentUserResponse;
 import com.tiktok.user.dto.LoginRequest;
 import com.tiktok.user.dto.LoginResponse;
 import com.tiktok.user.dto.LogoutResponse;
@@ -74,12 +75,7 @@ public class AuthService {
         if (user == null || !passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             throw new BizException(ErrorCode.UNAUTHORIZED, INVALID_CREDENTIALS_MESSAGE);
         }
-        if (BANNED_STATUS.equals(user.getStatus())) {
-            throw new BizException(ErrorCode.PERMISSION_DENIED, "账号已被封禁");
-        }
-        if (!DEFAULT_STATUS.equals(user.getStatus())) {
-            throw new BizException(ErrorCode.PERMISSION_DENIED, "账号状态异常，无法登录");
-        }
+        ensureUserCanLogin(user);
         return toLoginResponse(user);
     }
 
@@ -97,6 +93,33 @@ public class AuthService {
         response.setSuccess(true);
         response.setMessage("退出登录成功");
         return response;
+    }
+
+    public CurrentUserResponse getCurrentUser() {
+        User user = userMapper.selectById(UserContext.getCurrentUserId());
+        ensureUserCanAccess(user);
+        return toCurrentUserResponse(user);
+    }
+
+    private void ensureUserCanLogin(User user) {
+        if (BANNED_STATUS.equals(user.getStatus())) {
+            throw new BizException(ErrorCode.PERMISSION_DENIED, "账号已被封禁");
+        }
+        if (!DEFAULT_STATUS.equals(user.getStatus())) {
+            throw new BizException(ErrorCode.PERMISSION_DENIED, "账号状态异常，无法登录");
+        }
+    }
+
+    public void ensureUserCanAccess(User user) {
+        if (user == null) {
+            throw new BizException(ErrorCode.UNAUTHORIZED, "请先登录");
+        }
+        if (BANNED_STATUS.equals(user.getStatus())) {
+            throw new BizException(ErrorCode.PERMISSION_DENIED, "账号已被封禁");
+        }
+        if (!DEFAULT_STATUS.equals(user.getStatus())) {
+            throw new BizException(ErrorCode.PERMISSION_DENIED, "账号状态异常");
+        }
     }
 
     private RegisterResponse toRegisterResponse(User user) {
@@ -117,6 +140,17 @@ public class AuthService {
         response.setStatus(user.getStatus());
         response.setRole(user.getRole());
         response.setToken(jwtUtil.generateToken(user.getId(), user.getUsername(), user.getRole()));
+        return response;
+    }
+
+    private CurrentUserResponse toCurrentUserResponse(User user) {
+        CurrentUserResponse response = new CurrentUserResponse();
+        response.setUserId(user.getId());
+        response.setUsername(user.getUsername());
+        response.setStatus(user.getStatus());
+        response.setRole(user.getRole());
+        response.setCreatedAt(user.getCreatedAt());
+        response.setUpdatedAt(user.getUpdatedAt());
         return response;
     }
 }

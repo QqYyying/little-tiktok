@@ -19,6 +19,13 @@
         LIMIT 1
     </select>
 
+    <select id="selectById" resultMap="UserResultMap">
+        SELECT id, username, password_hash, status, role, created_at, updated_at
+        FROM `user`
+        WHERE id = #{id}
+        LIMIT 1
+    </select>
+
     <insert id="insert" parameterType="com.tiktok.user.entity.User" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO `user` (username, password_hash, status, role, created_at, updated_at)
         VALUES (#{username}, #{passwordHash}, #{status}, #{role}, #{createdAt}, #{updatedAt})

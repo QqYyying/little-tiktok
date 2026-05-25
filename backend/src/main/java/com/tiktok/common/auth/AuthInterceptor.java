@@ -2,7 +2,10 @@ package com.tiktok.common.auth;
 
 import com.tiktok.common.enums.ErrorCode;
 import com.tiktok.common.exception.BizException;
+import com.tiktok.user.entity.User;
 import com.tiktok.user.mapper.TokenBlacklistMapper;
+import com.tiktok.user.mapper.UserMapper;
+import com.tiktok.user.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpMethod;
@@ -18,10 +21,17 @@ public class AuthInterceptor implements HandlerInterceptor {
 
     private final JwtUtil jwtUtil;
     private final TokenBlacklistMapper tokenBlacklistMapper;
+    private final UserMapper userMapper;
+    private final AuthService authService;
 
-    public AuthInterceptor(JwtUtil jwtUtil, TokenBlacklistMapper tokenBlacklistMapper) {
+    public AuthInterceptor(JwtUtil jwtUtil,
+                           TokenBlacklistMapper tokenBlacklistMapper,
+                           UserMapper userMapper,
+                           AuthService authService) {
         this.jwtUtil = jwtUtil;
         this.tokenBlacklistMapper = tokenBlacklistMapper;
+        this.userMapper = userMapper;
+        this.authService = authService;
     }
 
     @Override
@@ -37,6 +47,10 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
         if (tokenBlacklisted) {
             request.setAttribute(TOKEN_ALREADY_BLACKLISTED_ATTRIBUTE, true);
+        }
+        if (!isLogoutRequest(request)) {
+            User user = userMapper.selectById(userInfo.getUserId());
+            authService.ensureUserCanAccess(user);
         }
         UserContext.set(userInfo);
         return true;

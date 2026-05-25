@@ -1,6 +1,5 @@
 package com.tiktok.user.controller;
 
-import com.tiktok.common.auth.UserContext;
 import com.tiktok.user.dto.CurrentUserResponse;
 import com.tiktok.user.dto.LoginRequest;
 import com.tiktok.user.dto.LoginResponse;
@@ -43,10 +42,6 @@ public class AuthController {
 
     @GetMapping("/me")
     public CurrentUserResponse me() {
-        CurrentUserResponse response = new CurrentUserResponse();
-        response.setUserId(UserContext.getCurrentUserId());
-        response.setUsername(UserContext.getCurrentUsername());
-        response.setRole(UserContext.getCurrentRole());
-        return response;
+        return authService.getCurrentUser();
     }
 }
