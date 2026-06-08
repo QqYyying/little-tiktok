@@ -1,0 +1,49 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - main [ref=e51]:
+      - generic [ref=e52]:
+        - generic [ref=e53]: 2 / 3
+        - button [ref=e54]:
+          - img [ref=e55]
+        - generic [ref=e62]:
+          - generic [ref=e63]:
+            - heading "QEMU 模拟 RISC-V 运行演示" [level=3] [ref=e95]
+            - paragraph [ref=e65]: "@alex_coder"
+          - generic [ref=e66]:
+            - button "15" [ref=e96]:
+              - img [ref=e68]
+              - generic [ref=e70]: "15"
+            - button "0" [ref=e71]:
+              - img [ref=e72]
+              - generic [ref=e74]: "0"
+        - button [active] [ref=e75]:
+          - img [ref=e76]
+    - navigation [ref=e6]:
+      - generic [ref=e7]:
+        - link "首页" [ref=e8] [cursor=pointer]:
+          - /url: /
+          - img [ref=e9]
+          - generic [ref=e12]: 首页
+        - link "发布" [ref=e78] [cursor=pointer]:
+          - /url: /upload
+          - img [ref=e79]
+          - generic [ref=e82]: 发布
+        - link "我的" [ref=e83] [cursor=pointer]:
+          - /url: /my-videos
+          - img [ref=e84]
+          - generic [ref=e87]: 我的
+        - button "退出" [ref=e88]:
+          - img [ref=e89]
+          - generic [ref=e92]: 退出
+  - generic [ref=e23] [cursor=pointer]:
+    - button "Open Next.js Dev Tools" [ref=e24]:
+      - img [ref=e25]
+    - generic [ref=e28]:
+      - button "Open issues overlay" [ref=e29]:
+        - generic [ref=e30]:
+          - generic [ref=e31]: "0"
+          - generic [ref=e32]: "1"
+        - generic [ref=e33]: Issue
+      - button "Collapse issues badge" [ref=e34]:
+        - img [ref=e35]
+  - alert [ref=e37]

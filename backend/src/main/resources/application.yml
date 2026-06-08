@@ -1,13 +1,10 @@
-# spring:
-#   application:
-#     name: backend
-#   # 默认激活 dev 配置（可按需修改或在运行时覆盖）
-#   profiles:
-#     active: dev
-
 spring:
   profiles:
-    active: dev # 👈 激活开发环境
+    active: dev
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 120MB
 
 app:
   jwt:
@@ -16,6 +13,10 @@ app:
     issuer: "little-tiktok"
   monitor:
     slow-threshold-ms: 500
+  storage:
+    local:
+      base-dir: uploads
+      public-base-url: /uploads
 
 management:
   endpoints:

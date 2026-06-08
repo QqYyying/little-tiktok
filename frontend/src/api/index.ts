@@ -1,5 +1,5 @@
 // API 基础配置
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api'
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1'
 
 // 统一响应类型
 export interface ApiResponse<T = unknown> {
@@ -14,7 +14,7 @@ async function request<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
-  const token = localStorage.getItem('token')
+  const token = typeof window === 'undefined' ? null : localStorage.getItem('token')
   
   const headers: HeadersInit = {
     'Content-Type': 'application/json',

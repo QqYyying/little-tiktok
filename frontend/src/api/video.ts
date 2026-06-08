@@ -1,56 +1,138 @@
-// 视频模块 API
-import { api } from './index'
+const VIDEO_API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1'
 
-export interface Video {
-  videoId: string
-  title: string
-  url: string
-  coverUrl: string
-  authorId: string
-  authorName: string
-  likeCount: number
-  createdAt: string
+interface ApiEnvelope<T> {
+  code: string
+  message: string
+  data: T
+  requestId: string
 }
 
-export interface VideoListResponse {
-  videos: Video[]
+export interface VideoRecord {
+  videoId: string
+  authorId: string
+  authorName?: string
+  title: string
+  description: string
+  videoUrl: string
+  coverUrl: string
+  likeCount: number
+  status: string
+  createdAt: string
+  updatedAt?: string
+}
+
+export interface MyVideosPageData {
   total: number
   page: number
   pageSize: number
+  records: VideoRecord[]
 }
 
 export interface UploadVideoRequest {
   title: string
+  description?: string
   file: File
+  coverFile?: File | null
+  coverUrl?: string
 }
 
-// 获取推荐视频流
-export const getRecommendVideos = (count: number = 5) =>
-  api.get<Video[]>(`/video/recommend?count=${count}`)
+export interface DeleteVideoResponse {
+  videoId: string
+  deleted: boolean
+  deletedAt: string
+}
 
-// 获取我的视频列表（分页）
-export const getMyVideos = (page: number = 1, pageSize: number = 10) =>
-  api.get<VideoListResponse>(`/video/my?page=${page}&pageSize=${pageSize}`)
+export interface ViewHistoryItem {
+  videoId: string
+  authorId: string
+  authorName?: string
+  title: string
+  description?: string
+  videoUrl?: string
+  coverUrl: string
+  likeCount: number
+  createdAt: string
+  viewedAt?: string
+}
 
-// 上传视频
-export const uploadVideo = async (data: UploadVideoRequest) => {
+export interface ViewHistoryResponse {
+  items: ViewHistoryItem[]
+}
+
+function buildHeaders(extraHeaders: HeadersInit = {}) {
+  const token = typeof window === 'undefined' ? null : localStorage.getItem('token')
+  return {
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...extraHeaders,
+  }
+}
+
+async function unwrapResponse<T>(response: Response): Promise<T> {
+  const payload: ApiEnvelope<T> = await response.json()
+  if (!response.ok || payload.code !== 'OK') {
+    throw new Error(payload.message || '请求失败')
+  }
+  return payload.data
+}
+
+export async function uploadVideo(data: UploadVideoRequest): Promise<VideoRecord> {
   const formData = new FormData()
   formData.append('title', data.title)
   formData.append('file', data.file)
+  if (data.description) {
+    formData.append('description', data.description)
+  }
+  if (data.coverFile) {
+    formData.append('coverFile', data.coverFile)
+  }
+  if (data.coverUrl) {
+    formData.append('coverUrl', data.coverUrl)
+  }
 
-  const token = localStorage.getItem('token')
-  const response = await fetch('/api/video/upload', {
+  const response = await fetch(`${VIDEO_API_BASE}/videos`, {
     method: 'POST',
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    headers: buildHeaders(),
     body: formData,
   })
-  return response.json()
+  return unwrapResponse<VideoRecord>(response)
 }
 
-// 删除视频
-export const deleteVideo = (videoId: string) =>
-  api.delete(`/video/${videoId}`)
+export async function getMyVideos(page: number = 1, pageSize: number = 10, keyword?: string): Promise<MyVideosPageData> {
+  const params = new URLSearchParams({
+    page: String(page),
+    pageSize: String(pageSize),
+  })
+  if (keyword?.trim()) {
+    params.set('keyword', keyword.trim())
+  }
 
-// 上报已读视频
-export const reportWatched = (videoId: string) =>
-  api.post('/video/watched', { videoId })
+  const response = await fetch(`${VIDEO_API_BASE}/users/me/videos?${params.toString()}`, {
+    method: 'GET',
+    headers: buildHeaders(),
+  })
+  return unwrapResponse<MyVideosPageData>(response)
+}
+
+export async function getVideoDetail(videoId: string): Promise<VideoRecord> {
+  const response = await fetch(`${VIDEO_API_BASE}/videos/${videoId}`, {
+    method: 'GET',
+    headers: buildHeaders(),
+  })
+  return unwrapResponse<VideoRecord>(response)
+}
+
+export async function deleteVideo(videoId: string): Promise<DeleteVideoResponse> {
+  const response = await fetch(`${VIDEO_API_BASE}/videos/${videoId}`, {
+    method: 'DELETE',
+    headers: buildHeaders(),
+  })
+  return unwrapResponse<DeleteVideoResponse>(response)
+}
+
+export async function getViewHistory(): Promise<ViewHistoryResponse> {
+  const response = await fetch(`${VIDEO_API_BASE}/videos/view/history`, {
+    method: 'GET',
+    headers: buildHeaders(),
+  })
+  return unwrapResponse<ViewHistoryResponse>(response)
+}

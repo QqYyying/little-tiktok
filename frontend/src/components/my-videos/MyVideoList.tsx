@@ -1,27 +1,72 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Trash2 } from 'lucide-react'
-import { Video } from '@/src/types/video'
-
-// Mock 数据
-const mockMyVideos: Video[] = [
-  { videoId: 'm1', title: '我的第一个视频', url: '', coverUrl: '', authorId: 'me', authorName: '我', likeCount: 100, createdAt: '2026-05-20T10:00:00' },
-  { videoId: 'm2', title: '日常记录', url: '', coverUrl: '', authorId: 'me', authorName: '我', likeCount: 50, createdAt: '2026-05-19T15:00:00' },
-]
+import { deleteVideo, getMyVideos, type VideoRecord } from '@/src/api/video'
 
 export function MyVideoList() {
-  const [videos, setVideos] = useState<Video[]>(mockMyVideos)
+  const [videos, setVideos] = useState<VideoRecord[]>([])
   const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const pageSize = 10
 
+  useEffect(() => {
+    let cancelled = false
+
+    async function fetchVideos() {
+      setLoading(true)
+      setError('')
+      try {
+        const data = await getMyVideos(page, pageSize)
+        if (cancelled) return
+        setVideos(data.records)
+        setTotal(data.total)
+      } catch (err) {
+        if (cancelled) return
+        setError(err instanceof Error ? err.message : '加载失败')
+      } finally {
+        if (!cancelled) {
+          setLoading(false)
+        }
+      }
+    }
+
+    void fetchVideos()
+    return () => {
+      cancelled = true
+    }
+  }, [page])
+
   const handleDelete = async (videoId: string) => {
-    if (!confirm('确定要删除这个视频吗？')) return
-    
-    // TODO: 替换为真实 API 调用
-    // await deleteVideo(videoId)
-    
-    setVideos((prev) => prev.filter((v) => v.videoId !== videoId))
+    if (!window.confirm('确定要删除这个视频吗？')) {
+      return
+    }
+
+    try {
+      await deleteVideo(videoId)
+      setVideos((prev) => prev.filter((video) => video.videoId !== videoId))
+      setTotal((prev) => Math.max(0, prev - 1))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '删除失败')
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="p-8 text-center border border-black">
+        <p className="text-gray-500">加载中...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="p-8 text-center border border-black">
+        <p className="text-red-600">{error}</p>
+      </div>
+    )
   }
 
   if (videos.length === 0) {
@@ -31,6 +76,8 @@ export function MyVideoList() {
       </div>
     )
   }
+
+  const totalPages = Math.max(1, Math.ceil(total / pageSize))
 
   return (
     <div className="space-y-4">
@@ -56,19 +103,18 @@ export function MyVideoList() {
         </div>
       ))}
 
-      {/* 分页 */}
       <div className="flex justify-center gap-2 pt-4">
         <button
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
+          onClick={() => setPage((current) => Math.max(1, current - 1))}
           disabled={page === 1}
           className="px-4 py-2 border border-black disabled:opacity-30"
         >
           上一页
         </button>
-        <span className="px-4 py-2">第 {page} 页</span>
+        <span className="px-4 py-2">第 {page} 页 / 共 {totalPages} 页</span>
         <button
-          onClick={() => setPage((p) => p + 1)}
-          disabled={videos.length < pageSize}
+          onClick={() => setPage((current) => current + 1)}
+          disabled={page >= totalPages}
           className="px-4 py-2 border border-black disabled:opacity-30"
         >
           下一页

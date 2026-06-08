@@ -1,4 +1,151 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.tiktok.video.mapper.VideoMapper">
+
+    <resultMap id="VideoResultMap" type="com.tiktok.video.entity.Video">
+        <id property="id" column="id"/>
+        <result property="authorId" column="author_id"/>
+        <result property="authorName" column="author_name"/>
+        <result property="title" column="title"/>
+        <result property="description" column="description"/>
+        <result property="videoUrl" column="play_url"/>
+        <result property="coverUrl" column="cover_url"/>
+        <result property="likeCount" column="like_count"/>
+        <result property="status" column="status"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="deletedAt" column="deleted_at"/>
+    </resultMap>
+
+    <sql id="BaseSelectColumns">
+        v.id,
+        v.author_id,
+        u.username AS author_name,
+        v.title,
+        v.description,
+        v.play_url,
+        v.cover_url,
+        v.like_count,
+        v.status,
+        v.created_at,
+        v.updated_at,
+        v.deleted_at
+    </sql>
+
+    <insert id="insert" parameterType="com.tiktok.video.entity.Video">
+        INSERT INTO video (
+            id, author_id, title, description, play_url, cover_url,
+            like_count, status, created_at, updated_at, deleted_at
+        ) VALUES (
+            #{id}, #{authorId}, #{title}, #{description}, #{videoUrl}, #{coverUrl},
+            #{likeCount}, #{status}, #{createdAt}, #{updatedAt}, #{deletedAt}
+        )
+    </insert>
+
+    <select id="selectById" resultMap="VideoResultMap">
+        SELECT
+            <include refid="BaseSelectColumns"/>
+        FROM video v
+        LEFT JOIN `user` u ON u.id = v.author_id
+        WHERE v.id = #{id}
+        LIMIT 1
+    </select>
+
+    <select id="countByAuthorId" resultType="long">
+        SELECT COUNT(1)
+        FROM video v
+        WHERE v.author_id = #{authorId}
+          AND v.status != 'DELETED'
+        <if test="keyword != null and keyword != ''">
+            AND (
+                v.title LIKE CONCAT('%', #{keyword}, '%')
+                OR v.description LIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
+    </select>
+
+    <select id="selectPageByAuthorId" resultMap="VideoResultMap">
+        SELECT
+            <include refid="BaseSelectColumns"/>
+        FROM video v
+        LEFT JOIN `user` u ON u.id = v.author_id
+        WHERE v.author_id = #{authorId}
+          AND v.status != 'DELETED'
+        <if test="keyword != null and keyword != ''">
+            AND (
+                v.title LIKE CONCAT('%', #{keyword}, '%')
+                OR v.description LIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
+        ORDER BY v.created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="findRecommendVideos" resultMap="VideoResultMap">
+        SELECT
+            <include refid="BaseSelectColumns"/>
+        FROM video v
+        LEFT JOIN `user` u ON u.id = v.author_id
+        WHERE v.status = 'ACTIVE'
+          AND v.deleted_at IS NULL
+          AND v.id NOT IN (
+              SELECT vv.video_id
+              FROM video_view vv
+              WHERE vv.user_id = #{userId}
+          )
+        ORDER BY v.like_count DESC, v.created_at DESC
+        LIMIT #{count}
+    </select>
+
+    <select id="findViewedVideos" resultMap="VideoResultMap">
+        SELECT
+            <include refid="BaseSelectColumns"/>
+        FROM video v
+        LEFT JOIN `user` u ON u.id = v.author_id
+        INNER JOIN video_view vv ON vv.video_id = v.id
+        WHERE vv.user_id = #{userId}
+          AND v.status = 'ACTIVE'
+          AND v.deleted_at IS NULL
+        ORDER BY vv.viewed_at DESC, v.created_at DESC
+    </select>
+
+    <select id="existsVisibleVideo" resultType="boolean">
+        SELECT COUNT(1) > 0
+        FROM video
+        WHERE id = #{videoId}
+          AND status = 'ACTIVE'
+          AND deleted_at IS NULL
+    </select>
+
+    <update id="incrementLikeCount">
+        UPDATE video
+        SET like_count = like_count + 1
+        WHERE id = #{videoId}
+          AND status = 'ACTIVE'
+          AND deleted_at IS NULL
+    </update>
+
+    <update id="decrementLikeCount">
+        UPDATE video
+        SET like_count = CASE WHEN like_count > 0 THEN like_count - 1 ELSE 0 END
+        WHERE id = #{videoId}
+          AND status = 'ACTIVE'
+          AND deleted_at IS NULL
+    </update>
+
+    <select id="getLikeCount" resultType="int">
+        SELECT like_count
+        FROM video
+        WHERE id = #{videoId}
+        LIMIT 1
+    </select>
+
+    <update id="logicalDelete">
+        UPDATE video
+        SET status = #{deletedStatus},
+            updated_at = #{updatedAt},
+            deleted_at = #{deletedAt}
+        WHERE id = #{id}
+          AND status != #{deletedStatus}
+    </update>
 </mapper>

@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { MyVideoList, FavoriteList } from '@/src/components/my-videos'
+import { FavoriteList, MyVideoList, ViewHistoryList } from '@/src/components/my-videos'
 
-type Tab = 'videos' | 'favorites'
+type Tab = 'videos' | 'favorites' | 'history'
 
 export default function MyVideosPage() {
   const [activeTab, setActiveTab] = useState<Tab>('videos')
@@ -13,7 +13,6 @@ export default function MyVideosPage() {
       <div className="max-w-md mx-auto">
         <h1 className="text-xl font-bold mb-4">我的</h1>
 
-        {/* Tab 切换 */}
         <div className="flex border-b border-black mb-6">
           <button
             onClick={() => setActiveTab('videos')}
@@ -27,10 +26,17 @@ export default function MyVideosPage() {
           >
             我的收藏
           </button>
+          <button
+            onClick={() => setActiveTab('history')}
+            className={`flex-1 py-2 text-center ${activeTab === 'history' ? 'border-b-2 border-black font-bold' : 'text-gray-500'}`}
+          >
+            浏览记录
+          </button>
         </div>
 
-        {/* Tab 内容 */}
-        {activeTab === 'videos' ? <MyVideoList /> : <FavoriteList />}
+        {activeTab === 'videos' && <MyVideoList />}
+        {activeTab === 'favorites' && <FavoriteList />}
+        {activeTab === 'history' && <ViewHistoryList />}
       </div>
     </main>
   )

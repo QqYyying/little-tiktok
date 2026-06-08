@@ -2,12 +2,14 @@
 export interface Video {
   videoId: string
   title: string
-  url: string
+  description?: string
+  videoUrl?: string
+  url?: string
   coverUrl: string
   authorId: string
   authorName: string
   likeCount: number
-  favoriteCount: number
+  favoriteCount?: number
   liked?: boolean
   favorited?: boolean
   createdAt: string

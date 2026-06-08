@@ -1,10 +1,19 @@
-// 用户模块 API
-import { api, ApiResponse } from './index'
+const AUTH_API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1'
 
-export interface User {
+interface ApiEnvelope<T> {
+  code: string
+  message: string
+  data: T
+  requestId: string
+}
+
+export interface AuthUser {
   userId: string
   username: string
-  createdAt: string
+  status?: string
+  role?: string
+  createdAt?: string
+  updatedAt?: string
 }
 
 export interface LoginRequest {
@@ -13,8 +22,11 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
+  userId: string
+  username: string
+  status: string
+  role: string
   token: string
-  user: User
 }
 
 export interface RegisterRequest {
@@ -22,16 +34,62 @@ export interface RegisterRequest {
   password: string
 }
 
-// 用户注册
-export const register = (data: RegisterRequest) =>
-  api.post<User>('/user/register', data)
+export interface RegisterResponse {
+  userId: string
+  username: string
+  status: string
+  role: string
+  createdAt: string
+  updatedAt: string
+}
 
-// 用户登录
-export const login = (data: LoginRequest) =>
-  api.post<LoginResponse>('/user/login', data)
+function buildHeaders(extraHeaders: HeadersInit = {}) {
+  const token = typeof window === 'undefined' ? null : localStorage.getItem('token')
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...extraHeaders,
+  }
+}
 
-// 退出登录
-export const logout = () => api.post('/user/logout')
+async function unwrapResponse<T>(response: Response): Promise<T> {
+  const payload: ApiEnvelope<T> = await response.json()
+  if (!response.ok || payload.code !== 'OK') {
+    throw new Error(payload.message || '请求失败')
+  }
+  return payload.data
+}
 
-// 获取当前用户信息
-export const getCurrentUser = () => api.get<User>('/user/me')
+export async function register(data: RegisterRequest): Promise<RegisterResponse> {
+  const response = await fetch(`${AUTH_API_BASE}/auth/register`, {
+    method: 'POST',
+    headers: buildHeaders(),
+    body: JSON.stringify(data),
+  })
+  return unwrapResponse<RegisterResponse>(response)
+}
+
+export async function login(data: LoginRequest): Promise<LoginResponse> {
+  const response = await fetch(`${AUTH_API_BASE}/auth/login`, {
+    method: 'POST',
+    headers: buildHeaders(),
+    body: JSON.stringify(data),
+  })
+  return unwrapResponse<LoginResponse>(response)
+}
+
+export async function logout(): Promise<void> {
+  const response = await fetch(`${AUTH_API_BASE}/auth/logout`, {
+    method: 'POST',
+    headers: buildHeaders(),
+  })
+  await unwrapResponse(response)
+}
+
+export async function getCurrentUser(): Promise<AuthUser> {
+  const response = await fetch(`${AUTH_API_BASE}/auth/me`, {
+    method: 'GET',
+    headers: buildHeaders(),
+  })
+  return unwrapResponse<AuthUser>(response)
+}

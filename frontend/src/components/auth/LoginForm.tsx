@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/src/hooks/useAuth'
+import { login as loginApi } from '@/src/api/user'
 
 export function LoginForm({ onSuccess }: { onSuccess?: () => void }) {
   const { login } = useAuth()
@@ -13,24 +14,28 @@ export function LoginForm({ onSuccess }: { onSuccess?: () => void }) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    setLoading(true)
 
-    // TODO: 替换为真实 API 调用
-    // const res = await loginApi({ username, password })
-    
-    // Mock 登录
-    setTimeout(() => {
-      if (username && password) {
-        login('mock_token_' + Date.now(), {
-          userId: 'u_' + Date.now(),
-          username,
-        })
-        onSuccess?.()
-      } else {
-        setError('请输入用户名和密码')
-      }
+    if (!username.trim() || !password) {
+      setError('请输入用户名和密码')
+      return
+    }
+
+    setLoading(true)
+    try {
+      const result = await loginApi({
+        username: username.trim(),
+        password,
+      })
+      login(result.token, {
+        userId: result.userId,
+        username: result.username,
+      })
+      onSuccess?.()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '登录失败')
+    } finally {
       setLoading(false)
-    }, 500)
+    }
   }
 
   return (

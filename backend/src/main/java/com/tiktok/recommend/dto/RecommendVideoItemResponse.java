@@ -1,0 +1,24 @@
+package com.tiktok.recommend.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class RecommendVideoItemResponse {
+
+    private String videoId;
+    private String authorId;
+    private String authorName;
+    private String title;
+    private String description;
+    private String videoUrl;
+    private String coverUrl;
+    private Integer likeCount;
+    private Boolean liked;
+    private LocalDateTime createdAt;
+}

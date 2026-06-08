@@ -1,17 +1,25 @@
 'use client'
 
 import { useState } from 'react'
+import { register as registerApi } from '@/src/api/user'
 
 export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setSuccessMessage('')
+
+    if (!username.trim() || !password || !confirmPassword) {
+      setError('请填写完整信息')
+      return
+    }
 
     if (password !== confirmPassword) {
       setError('两次密码不一致')
@@ -19,19 +27,21 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
     }
 
     setLoading(true)
-
-    // TODO: 替换为真实 API 调用
-    // const res = await registerApi({ username, password })
-    
-    // Mock 注册
-    setTimeout(() => {
-      if (username && password) {
-        onSuccess?.()
-      } else {
-        setError('请填写完整信息')
-      }
+    try {
+      await registerApi({
+        username: username.trim(),
+        password,
+      })
+      setSuccessMessage('注册成功，请登录')
+      setUsername('')
+      setPassword('')
+      setConfirmPassword('')
+      onSuccess?.()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '注册失败')
+    } finally {
       setLoading(false)
-    }, 500)
+    }
   }
 
   return (
@@ -67,6 +77,7 @@ export function RegisterForm({ onSuccess }: { onSuccess?: () => void }) {
         />
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
+      {successMessage && <p className="text-sm text-green-700">{successMessage}</p>}
       <button
         type="submit"
         disabled={loading}
