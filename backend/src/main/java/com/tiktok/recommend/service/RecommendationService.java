@@ -9,6 +9,7 @@ import com.tiktok.video.entity.Video;
 import com.tiktok.video.mapper.VideoMapper;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -29,7 +30,12 @@ public class RecommendationService {
         validateUserId(userId);
         int normalizedCount = normalizeCount(count);
 
-        List<Video> videos = videoMapper.findRecommendVideos(userId, normalizedCount);
+        List<Video> videos = new ArrayList<>(videoMapper.findRecommendVideos(userId, normalizedCount));
+        if (videos.size() < normalizedCount) {
+            int remaining = normalizedCount - videos.size();
+            videos.addAll(videoMapper.findViewedRecommendVideos(userId, remaining));
+        }
+
         List<RecommendVideoItemResponse> items = videos.stream()
                 .map(video -> toItem(userId, video))
                 .toList();

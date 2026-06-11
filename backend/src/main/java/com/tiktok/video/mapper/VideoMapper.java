@@ -21,6 +21,8 @@ public interface VideoMapper {
 
     List<Video> findRecommendVideos(@Param("userId") String userId, @Param("count") int count);
 
+    List<Video> findViewedRecommendVideos(@Param("userId") String userId, @Param("count") int count);
+
     List<Video> findViewedVideos(@Param("userId") String userId);
 
     boolean existsVisibleVideo(@Param("videoId") String videoId);

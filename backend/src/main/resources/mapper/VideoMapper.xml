@@ -97,6 +97,19 @@
         LIMIT #{count}
     </select>
 
+    <select id="findViewedRecommendVideos" resultMap="VideoResultMap">
+        SELECT
+            <include refid="BaseSelectColumns"/>
+        FROM video v
+        LEFT JOIN `user` u ON u.id = v.author_id
+        INNER JOIN video_view vv ON vv.video_id = v.id
+        WHERE vv.user_id = #{userId}
+          AND v.status = 'ACTIVE'
+          AND v.deleted_at IS NULL
+        ORDER BY vv.viewed_at DESC, v.created_at DESC
+        LIMIT #{count}
+    </select>
+
     <select id="findViewedVideos" resultMap="VideoResultMap">
         SELECT
             <include refid="BaseSelectColumns"/>

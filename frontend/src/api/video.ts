@@ -1,3 +1,5 @@
+import { resolveMediaUrl } from '@/src/utils/media'
+
 const VIDEO_API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1'
 
 interface ApiEnvelope<T> {
@@ -70,9 +72,25 @@ function buildHeaders(extraHeaders: HeadersInit = {}) {
 async function unwrapResponse<T>(response: Response): Promise<T> {
   const payload: ApiEnvelope<T> = await response.json()
   if (!response.ok || payload.code !== 'OK') {
-    throw new Error(payload.message || '请求失败')
+    throw new Error(payload.message || 'request failed')
   }
   return payload.data
+}
+
+function normalizeVideoRecord(video: VideoRecord): VideoRecord {
+  return {
+    ...video,
+    videoUrl: resolveMediaUrl(video.videoUrl),
+    coverUrl: resolveMediaUrl(video.coverUrl),
+  }
+}
+
+function normalizeViewHistoryItem(item: ViewHistoryItem): ViewHistoryItem {
+  return {
+    ...item,
+    videoUrl: resolveMediaUrl(item.videoUrl),
+    coverUrl: resolveMediaUrl(item.coverUrl),
+  }
 }
 
 export async function uploadVideo(data: UploadVideoRequest): Promise<VideoRecord> {
@@ -94,7 +112,7 @@ export async function uploadVideo(data: UploadVideoRequest): Promise<VideoRecord
     headers: buildHeaders(),
     body: formData,
   })
-  return unwrapResponse<VideoRecord>(response)
+  return normalizeVideoRecord(await unwrapResponse<VideoRecord>(response))
 }
 
 export async function getMyVideos(page: number = 1, pageSize: number = 10, keyword?: string): Promise<MyVideosPageData> {
@@ -110,7 +128,11 @@ export async function getMyVideos(page: number = 1, pageSize: number = 10, keywo
     method: 'GET',
     headers: buildHeaders(),
   })
-  return unwrapResponse<MyVideosPageData>(response)
+  const data = await unwrapResponse<MyVideosPageData>(response)
+  return {
+    ...data,
+    records: data.records.map(normalizeVideoRecord),
+  }
 }
 
 export async function getVideoDetail(videoId: string): Promise<VideoRecord> {
@@ -118,7 +140,7 @@ export async function getVideoDetail(videoId: string): Promise<VideoRecord> {
     method: 'GET',
     headers: buildHeaders(),
   })
-  return unwrapResponse<VideoRecord>(response)
+  return normalizeVideoRecord(await unwrapResponse<VideoRecord>(response))
 }
 
 export async function deleteVideo(videoId: string): Promise<DeleteVideoResponse> {
@@ -134,5 +156,8 @@ export async function getViewHistory(): Promise<ViewHistoryResponse> {
     method: 'GET',
     headers: buildHeaders(),
   })
-  return unwrapResponse<ViewHistoryResponse>(response)
+  const data = await unwrapResponse<ViewHistoryResponse>(response)
+  return {
+    items: data.items.map(normalizeViewHistoryItem),
+  }
 }

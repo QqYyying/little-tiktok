@@ -7,4 +7,6 @@ public interface FileService {
     StoredFile storeVideo(MultipartFile file);
 
     StoredFile storeCover(MultipartFile file);
+
+    void delete(String fileUrl);
 }

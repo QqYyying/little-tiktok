@@ -1,5 +1,6 @@
 import { api } from '@/src/api'
 import type { Video } from '@/src/types/video'
+import { resolveMediaUrl } from '@/src/utils/media'
 
 export interface RecommendRequest {
   count?: number
@@ -33,15 +34,17 @@ export interface IRecommendService {
 }
 
 function mapVideo(item: RecommendFeedItemDto): Video {
+  const videoUrl = resolveMediaUrl(item.videoUrl)
+
   return {
     videoId: item.videoId,
     authorId: item.authorId,
     authorName: item.authorName,
     title: item.title,
     description: item.description,
-    videoUrl: item.videoUrl,
-    url: item.videoUrl,
-    coverUrl: item.coverUrl,
+    videoUrl,
+    url: videoUrl,
+    coverUrl: resolveMediaUrl(item.coverUrl),
     likeCount: item.likeCount,
     favoriteCount: 0,
     liked: item.liked,
