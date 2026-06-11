@@ -38,7 +38,7 @@ public class LocalFileService implements FileService {
 
     public LocalFileService(@Value("${app.storage.local.base-dir:uploads}") String baseDir,
                             @Value("${app.storage.local.public-base-url:/uploads}") String publicBaseUrl) {
-        this.rootDir = Paths.get(baseDir).toAbsolutePath().normalize();
+        this.rootDir = resolveRootDir(baseDir);
         this.publicBaseUrl = normalizePublicBaseUrl(publicBaseUrl);
     }
 
@@ -123,6 +123,26 @@ public class LocalFileService implements FileService {
         if (!path.startsWith(rootDir)) {
             throw new BizException(ErrorCode.INVALID_ARGUMENT, "非法文件路径");
         }
+    }
+
+    private Path resolveRootDir(String baseDir) {
+        Path configuredPath = Paths.get(baseDir);
+        if (configuredPath.isAbsolute()) {
+            return configuredPath.normalize();
+        }
+
+        Path cwd = Paths.get("").toAbsolutePath().normalize();
+        Path cwdPath = cwd.resolve(configuredPath).normalize();
+        if (Files.exists(cwdPath) || cwd.endsWith("backend")) {
+            return cwdPath;
+        }
+
+        Path backendPath = cwd.resolve("backend").resolve(configuredPath).normalize();
+        if (Files.exists(backendPath)) {
+            return backendPath;
+        }
+
+        return cwdPath;
     }
 
     private String normalizePublicBaseUrl(String baseUrl) {

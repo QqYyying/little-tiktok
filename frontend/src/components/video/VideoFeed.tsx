@@ -11,6 +11,8 @@ const TOUCH_SWIPE_THRESHOLD = 50
 export function VideoFeed() {
   const {
     currentVideo,
+    nextVideoToPreload,
+    currentVideoLikePending,
     currentIndex,
     videos,
     nextVideo,
@@ -19,13 +21,11 @@ export function VideoFeed() {
     toggleFavorite,
     loading,
     error,
-    hasMore,
     reload,
   } = useVideoFeed()
   const wheelLockedRef = useRef(false)
   const touchStartYRef = useRef<number | null>(null)
   const canGoPrev = currentIndex > 0
-  const canGoNext = currentIndex < videos.length - 1
 
   const navigateToPrev = useCallback(() => {
     if (!canGoPrev) {
@@ -36,12 +36,12 @@ export function VideoFeed() {
   }, [canGoPrev, prevVideo])
 
   const navigateToNext = useCallback(() => {
-    if (!canGoNext) {
+    if (videos.length === 0) {
       return
     }
 
-    nextVideo()
-  }, [canGoNext, nextVideo])
+    void nextVideo()
+  }, [nextVideo, videos.length])
 
   const handleWheelNavigation = useCallback((deltaY: number) => {
     if (videos.length === 0 || deltaY === 0 || wheelLockedRef.current) {
@@ -86,7 +86,7 @@ export function VideoFeed() {
 
   if (loading && videos.length === 0) {
     return (
-      <div className="h-full flex items-center justify-center border border-black">
+      <div className="h-full flex items-center justify-center bg-black text-white">
         <p>加载推荐视频中...</p>
       </div>
     )
@@ -94,9 +94,13 @@ export function VideoFeed() {
 
   if (error && videos.length === 0) {
     return (
-      <div className="h-full flex flex-col items-center justify-center gap-4 border border-black p-6 text-center">
-        <p className="text-red-600">{error}</p>
-        <button onClick={reload} className="px-4 py-2 border border-black hover:bg-gray-100">
+      <div className="h-full flex flex-col items-center justify-center gap-4 bg-black p-6 text-center text-white">
+        <p className="text-red-400">{error}</p>
+        <button
+          type="button"
+          onClick={reload}
+          className="px-4 py-2 border border-white/70 hover:bg-white/15"
+        >
           重试
         </button>
       </div>
@@ -105,7 +109,7 @@ export function VideoFeed() {
 
   if (!currentVideo) {
     return (
-      <div className="h-full flex items-center justify-center border border-black">
+      <div className="h-full flex items-center justify-center bg-black text-white">
         <p>暂无更多视频</p>
       </div>
     )
@@ -113,7 +117,7 @@ export function VideoFeed() {
 
   return (
     <div
-      className="h-full flex flex-col"
+      className="relative h-full overflow-hidden bg-black text-white"
       onWheel={(event) => handleWheelNavigation(event.deltaY)}
       onTouchStart={(event) => {
         touchStartYRef.current = event.touches[0]?.clientY ?? null
@@ -141,38 +145,54 @@ export function VideoFeed() {
         navigateToPrev()
       }}
     >
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 text-xs text-gray-500">
-        {currentIndex + 1} / {videos.length}
-      </div>
-
       <button
+        type="button"
+        aria-label="上一个视频"
         onClick={navigateToPrev}
         disabled={!canGoPrev}
-        className="absolute top-16 left-1/2 -translate-x-1/2 z-10 p-2 border border-black bg-white disabled:opacity-30"
+        className="absolute top-14 left-1/2 -translate-x-1/2 z-10 p-2 border border-white/60 bg-black/50 text-white hover:bg-white/15 disabled:opacity-30"
       >
         <ChevronUp className="w-6 h-6" />
       </button>
 
-      <div className="flex-1 relative">
-        <VideoCard video={currentVideo} onLike={toggleLike} onFavorite={toggleFavorite} />
+      <div className="h-full">
+        <VideoCard
+          video={currentVideo}
+          onLike={toggleLike}
+          onFavorite={toggleFavorite}
+          likePending={currentVideoLikePending}
+        />
       </div>
 
+      {nextVideoToPreload && (nextVideoToPreload.videoUrl || nextVideoToPreload.url) && (
+        <video
+          aria-hidden="true"
+          className="pointer-events-none absolute h-0 w-0 opacity-0"
+          muted
+          playsInline
+          preload="auto"
+          src={nextVideoToPreload.videoUrl || nextVideoToPreload.url}
+        />
+      )}
+
       <button
+        type="button"
+        aria-label="下一个视频"
         onClick={navigateToNext}
-        disabled={!canGoNext && !hasMore}
-        className="absolute bottom-20 left-1/2 -translate-x-1/2 z-10 p-2 border border-black bg-white disabled:opacity-30"
+        disabled={videos.length === 0}
+        className="absolute bottom-20 left-1/2 -translate-x-1/2 z-10 p-2 border border-white/60 bg-black/50 text-white hover:bg-white/15 disabled:opacity-30"
       >
         <ChevronDown className="w-6 h-6" />
       </button>
 
       {loading && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-xs">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/55 px-3 py-1 text-xs text-white/80">
           加载中...
         </div>
       )}
 
       {error && videos.length > 0 && (
-        <div className="absolute bottom-4 right-4 max-w-xs border border-red-300 bg-white px-3 py-2 text-xs text-red-600">
+        <div className="absolute bottom-4 right-4 max-w-xs border border-red-300 bg-black/80 px-3 py-2 text-xs text-red-300">
           {error}
         </div>
       )}

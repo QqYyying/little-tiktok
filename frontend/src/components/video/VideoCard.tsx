@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import { Heart, Star } from 'lucide-react'
 import { Video } from '@/src/types/video'
 
@@ -7,21 +8,44 @@ interface VideoCardProps {
   video: Video
   onLike: (videoId: string) => void | Promise<void>
   onFavorite: (videoId: string) => void
+  likePending?: boolean
 }
 
-export function VideoCard({ video, onLike, onFavorite }: VideoCardProps) {
+export function VideoCard({ video, onLike, onFavorite, likePending = false }: VideoCardProps) {
   const videoUrl = video.videoUrl || video.url || ''
+  const videoRef = useRef<HTMLVideoElement | null>(null)
+
+  useEffect(() => {
+    const videoElement = videoRef.current
+    if (!videoElement || !videoUrl) {
+      return
+    }
+
+    videoElement.currentTime = 0
+    const playPromise = videoElement.play()
+    if (playPromise !== undefined) {
+      playPromise.catch((error) => {
+        console.warn('Failed to autoplay video', { videoId: video.videoId, error })
+      })
+    }
+
+    return () => {
+      videoElement.pause()
+    }
+  }, [video.videoId, videoUrl])
 
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center border border-black bg-white">
-      <div className="flex-1 w-full flex items-center justify-center bg-gray-100 border-b border-black">
+    <div className="w-full h-full flex flex-col items-center justify-center bg-black text-white">
+      <div className="min-h-0 flex-1 w-full flex items-center justify-center bg-black">
         {videoUrl ? (
           <video
+            ref={videoRef}
             key={video.videoId}
             src={videoUrl}
             poster={video.coverUrl}
             controls
             autoPlay
+            loop
             muted
             playsInline
             className="h-full w-full object-contain bg-black"
@@ -29,33 +53,38 @@ export function VideoCard({ video, onLike, onFavorite }: VideoCardProps) {
         ) : (
           <div className="text-center">
             <div className="text-6xl mb-4">▶</div>
-            <p className="text-sm text-gray-500">暂无视频地址</p>
+            <p className="text-sm text-white/70">暂无视频地址</p>
           </div>
         )}
       </div>
 
-      <div className="w-full p-4 border-t border-black">
+      <div className="w-full p-4 bg-black/85">
         <div className="flex justify-between items-start gap-4">
           <div className="min-w-0">
             <h3 className="font-bold text-lg">{video.title}</h3>
-            <p className="text-sm text-gray-600">@{video.authorName}</p>
+            <p className="text-sm text-white/70">@{video.authorName}</p>
             {video.description && (
-              <p className="mt-2 text-sm text-gray-500 line-clamp-2">{video.description}</p>
+              <p className="mt-2 text-sm text-white/60 line-clamp-2">{video.description}</p>
             )}
           </div>
           <div className="flex gap-2">
             <button
+              type="button"
+              aria-label={video.liked ? '取消点赞' : '点赞'}
+              disabled={likePending}
               onClick={() => void onLike(video.videoId)}
-              className="flex flex-col items-center p-2 border border-black hover:bg-gray-100"
+              className="flex flex-col items-center p-2 border border-white/50 bg-black/50 hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <Heart className={`w-6 h-6 ${video.liked ? 'fill-black' : ''}`} />
+              <Heart className={`w-6 h-6 ${video.liked ? 'fill-white' : ''}`} />
               <span className="text-xs mt-1">{video.likeCount}</span>
             </button>
             <button
+              type="button"
+              aria-label={video.favorited ? '取消收藏' : '收藏'}
               onClick={() => onFavorite(video.videoId)}
-              className="flex flex-col items-center p-2 border border-black hover:bg-gray-100"
+              className="flex flex-col items-center p-2 border border-white/50 bg-black/50 hover:bg-white/15"
             >
-              <Star className={`w-6 h-6 ${video.favorited ? 'fill-black' : ''}`} />
+              <Star className={`w-6 h-6 ${video.favorited ? 'fill-white' : ''}`} />
               <span className="text-xs mt-1">{video.favoriteCount ?? 0}</span>
             </button>
           </div>

@@ -7,6 +7,7 @@ import { likeVideo, unlikeVideo } from '@/src/services/like'
 import { reportVideoView } from '@/src/services/video'
 
 const DEFAULT_FEED_COUNT = 5
+const LOAD_MORE_THRESHOLD = 2
 
 export function useVideoFeed() {
   const [videos, setVideos] = useState<Video[]>([])
@@ -14,40 +15,71 @@ export function useVideoFeed() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [hasMore, setHasMore] = useState(false)
+  const [pendingLikeVideoIds, setPendingLikeVideoIds] = useState<Set<string>>(() => new Set())
   const reportedVideoIdsRef = useRef<Set<string>>(new Set())
   const reportingVideoIdsRef = useRef<Set<string>>(new Set())
-
-  const mergeVideos = useCallback((current: Video[], incoming: Video[]) => {
-    const existingIds = new Set(current.map((video) => video.videoId))
-    const uniqueIncoming = incoming.filter((video) => !existingIds.has(video.videoId))
-    return [...current, ...uniqueIncoming]
-  }, [])
+  const loadingFeedRef = useRef(false)
+  const loadingFeedPromiseRef = useRef<Promise<number> | null>(null)
+  const pendingLikeVideoIdsRef = useRef<Set<string>>(new Set())
+  const videosRef = useRef<Video[]>([])
+  const currentIndexRef = useRef(0)
+  const hasMoreRef = useRef(false)
+  const nextOffsetRef = useRef(0)
 
   const loadFeed = useCallback(async (count: number, append: boolean) => {
-    setLoading(true)
-    if (!append) {
-      setError('')
+    if (loadingFeedRef.current) {
+      return loadingFeedPromiseRef.current ?? 0
     }
 
-    try {
-      const response = await getRecommendFeed({ count })
-      setHasMore(response.hasMore)
-      setVideos((prev) => (append ? mergeVideos(prev, response.items) : response.items))
+    const loadPromise = (async () => {
+      loadingFeedRef.current = true
+      setLoading(true)
+      if (!append) {
+        setError('')
+      }
 
-      if (!append) {
-        setCurrentIndex(0)
+      try {
+        const offset = append ? nextOffsetRef.current : 0
+        const response = await getRecommendFeed({ count, offset })
+        setHasMore(response.hasMore)
+        hasMoreRef.current = response.hasMore
+        nextOffsetRef.current = offset + response.items.length
+
+        setVideos((prev) => {
+          const nextVideos = append ? [...prev, ...response.items] : response.items
+          videosRef.current = nextVideos
+          return nextVideos
+        })
+
+        if (!append) {
+          currentIndexRef.current = 0
+          setCurrentIndex(0)
+        }
+
+        return response.items.length
+      } catch (err) {
+        console.error('Failed to load recommend feed', err)
+        setError(err instanceof Error ? err.message : '加载推荐视频失败')
+        if (!append) {
+          videosRef.current = []
+          currentIndexRef.current = 0
+          hasMoreRef.current = false
+          nextOffsetRef.current = 0
+          setVideos([])
+          setCurrentIndex(0)
+          setHasMore(false)
+        }
+        return 0
+      } finally {
+        loadingFeedRef.current = false
+        loadingFeedPromiseRef.current = null
+        setLoading(false)
       }
-    } catch (err) {
-      console.error('Failed to load recommend feed', err)
-      setError(err instanceof Error ? err.message : '加载推荐视频失败')
-      if (!append) {
-        setVideos([])
-        setHasMore(false)
-      }
-    } finally {
-      setLoading(false)
-    }
-  }, [mergeVideos])
+    })()
+
+    loadingFeedPromiseRef.current = loadPromise
+    return loadPromise
+  }, [])
 
   useEffect(() => {
     void loadFeed(DEFAULT_FEED_COUNT, false)
@@ -75,36 +107,52 @@ export function useVideoFeed() {
     }
   }, [])
 
-  const nextVideo = useCallback(() => {
-    if (currentIndex >= videos.length - 1) {
+  const goToVideo = useCallback((nextIndex: number) => {
+    currentIndexRef.current = nextIndex
+    setCurrentIndex(nextIndex)
+    void reportViewedVideo(videosRef.current[nextIndex])
+  }, [reportViewedVideo])
+
+  const nextVideo = useCallback(async () => {
+    const currentVideoIndex = currentIndexRef.current
+    if (videosRef.current.length === 0) {
       return
     }
 
-    const nextIndex = currentIndex + 1
-    setCurrentIndex(nextIndex)
-    void reportViewedVideo(videos[nextIndex])
-  }, [currentIndex, reportViewedVideo, videos])
+    if (currentVideoIndex < videosRef.current.length - 1) {
+      goToVideo(currentVideoIndex + 1)
+      return
+    }
+
+    if (!hasMoreRef.current) {
+      return
+    }
+
+    const loadedCount = await loadFeed(DEFAULT_FEED_COUNT, true)
+    if (loadedCount > 0 && currentVideoIndex < videosRef.current.length - 1) {
+      goToVideo(currentVideoIndex + 1)
+    }
+  }, [goToVideo, loadFeed])
 
   const prevVideo = useCallback(() => {
-    if (currentIndex <= 0) {
+    const currentVideoIndex = currentIndexRef.current
+    if (currentVideoIndex <= 0) {
       return
     }
 
-    const prevIndex = currentIndex - 1
-    setCurrentIndex(prevIndex)
-    void reportViewedVideo(videos[prevIndex])
-  }, [currentIndex, reportViewedVideo, videos])
+    goToVideo(currentVideoIndex - 1)
+  }, [goToVideo])
 
   const loadMore = useCallback(async () => {
-    if (loading || !hasMore) {
+    if (loadingFeedRef.current || !hasMoreRef.current) {
       return
     }
 
     await loadFeed(DEFAULT_FEED_COUNT, true)
-  }, [hasMore, loadFeed, loading])
+  }, [loadFeed])
 
   useEffect(() => {
-    if (videos.length - currentIndex <= 2 && hasMore) {
+    if (videos.length - currentIndex <= LOAD_MORE_THRESHOLD && hasMore) {
       void loadMore()
     }
   }, [currentIndex, hasMore, loadMore, videos.length])
@@ -115,32 +163,45 @@ export function useVideoFeed() {
   }, [currentIndex, reportViewedVideo, videos])
 
   const toggleLike = useCallback(async (videoId: string) => {
-    const targetVideo = videos.find((video) => video.videoId === videoId)
+    if (pendingLikeVideoIdsRef.current.has(videoId)) {
+      return
+    }
+
+    const targetVideo = videosRef.current.find((video) => video.videoId === videoId)
     if (!targetVideo) {
       return
     }
+
+    pendingLikeVideoIdsRef.current.add(videoId)
+    setPendingLikeVideoIds(new Set(pendingLikeVideoIdsRef.current))
+    setError('')
 
     try {
       const result = targetVideo.liked
         ? await unlikeVideo(videoId)
         : await likeVideo(videoId)
 
-      setVideos((prev) =>
-        prev.map((video) =>
+      setVideos((prev) => {
+        const nextVideos = prev.map((video) =>
           video.videoId === videoId
             ? { ...video, liked: result.liked, likeCount: result.likeCount }
             : video
         )
-      )
+        videosRef.current = nextVideos
+        return nextVideos
+      })
     } catch (err) {
       console.error('Failed to toggle like', err)
-      setError(err instanceof Error ? err.message : '点赞操作失败')
+      setError(err instanceof Error ? err.message : '点赞操作失败，请稍后重试')
+    } finally {
+      pendingLikeVideoIdsRef.current.delete(videoId)
+      setPendingLikeVideoIds(new Set(pendingLikeVideoIdsRef.current))
     }
-  }, [videos])
+  }, [])
 
   const toggleFavorite = useCallback((videoId: string) => {
-    setVideos((prev) =>
-      prev.map((video) =>
+    setVideos((prev) => {
+      const nextVideos = prev.map((video) =>
         video.videoId === videoId
           ? {
               ...video,
@@ -149,14 +210,20 @@ export function useVideoFeed() {
             }
           : video
       )
-    )
+      videosRef.current = nextVideos
+      return nextVideos
+    })
   }, [])
 
   const currentVideo = videos[currentIndex] || null
+  const nextVideoToPreload = videos[currentIndex + 1] || null
+  const currentVideoLikePending = currentVideo ? pendingLikeVideoIds.has(currentVideo.videoId) : false
 
   return {
     videos,
     currentVideo,
+    nextVideoToPreload,
+    currentVideoLikePending,
     currentIndex,
     loading,
     error,

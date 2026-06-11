@@ -66,21 +66,21 @@ public class JwtUtil {
 
     public String extractBearerToken(String authorizationHeader) {
         if (!hasText(authorizationHeader)) {
-            throw new BizException(ErrorCode.UNAUTHORIZED, "请先登录");
+            throw new BizException(ErrorCode.UNAUTHORIZED, "\u8bf7\u5148\u767b\u5f55");
         }
         if (!authorizationHeader.startsWith(BEARER_PREFIX)) {
-            throw new BizException(ErrorCode.UNAUTHORIZED, "无效的登录凭证");
+            throw new BizException(ErrorCode.UNAUTHORIZED, "\u65e0\u6548\u7684\u767b\u5f55\u51ed\u8bc1");
         }
         String token = authorizationHeader.substring(BEARER_PREFIX.length()).trim();
         if (!hasText(token)) {
-            throw new BizException(ErrorCode.UNAUTHORIZED, "请先登录");
+            throw new BizException(ErrorCode.UNAUTHORIZED, "\u8bf7\u5148\u767b\u5f55");
         }
         return token;
     }
 
     private Claims parseClaims(String token) {
         if (!hasText(token)) {
-            throw new BizException(ErrorCode.UNAUTHORIZED, "请先登录");
+            throw new BizException(ErrorCode.UNAUTHORIZED, "\u8bf7\u5148\u767b\u5f55");
         }
         try {
             return Jwts.parser()
@@ -90,19 +90,19 @@ public class JwtUtil {
                     .parseSignedClaims(token)
                     .getPayload();
         } catch (ExpiredJwtException e) {
-            throw new BizException(ErrorCode.TOKEN_EXPIRED, "登录已过期", e);
+            throw new BizException(ErrorCode.TOKEN_EXPIRED, "\u767b\u5f55\u5df2\u8fc7\u671f", e);
         } catch (JwtException | IllegalArgumentException e) {
-            throw new BizException(ErrorCode.UNAUTHORIZED, "无效的登录凭证", e);
+            throw new BizException(ErrorCode.UNAUTHORIZED, "\u65e0\u6548\u7684\u767b\u5f55\u51ed\u8bc1", e);
         }
     }
 
     private SecretKey getSecretKey() {
         if (!hasText(secret)) {
-            throw new BizException(ErrorCode.INTERNAL_ERROR, "JWT 配置缺失");
+            throw new BizException(ErrorCode.INTERNAL_ERROR, "JWT \u914d\u7f6e\u7f3a\u5931");
         }
         byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
         if (keyBytes.length < 32) {
-            throw new BizException(ErrorCode.INTERNAL_ERROR, "JWT secret 长度不能小于 32 字节");
+            throw new BizException(ErrorCode.INTERNAL_ERROR, "JWT secret \u957f\u5ea6\u4e0d\u80fd\u5c0f\u4e8e 32 \u5b57\u8282");
         }
         return Keys.hmacShaKeyFor(keyBytes);
     }

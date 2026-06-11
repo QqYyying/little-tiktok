@@ -32,7 +32,8 @@ public class LocalRecommendationRpcClient implements RecommendationRpcClient {
 
         RecommendFeedResponse feedResponse = recommendationService.getRecommendFeed(
                 request.getUserId(),
-                request.getCount() == null ? 0 : request.getCount()
+                request.getCount() == null ? 0 : request.getCount(),
+                request.getOffset() == null ? 0 : request.getOffset()
         );
 
         return new RecommendRpcResponse(feedResponse.getItems(), feedResponse.getHasMore());

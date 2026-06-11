@@ -62,19 +62,19 @@ public class LikeService {
 
     private void ensureVisibleVideo(String videoId) {
         if (!videoMapper.existsVisibleVideo(videoId)) {
-            throw new BizException(ErrorCode.NOT_FOUND, "视频不存在或不可见");
+            throw new BizException(ErrorCode.NOT_FOUND, "\u89c6\u9891\u4e0d\u5b58\u5728\u6216\u4e0d\u53ef\u89c1");
         }
     }
 
     private void validateUserId(String userId) {
         if (userId == null || userId.isBlank()) {
-            throw new BizException(ErrorCode.INVALID_ARGUMENT, "userId 不能为空");
+            throw new BizException(ErrorCode.INVALID_ARGUMENT, "userId \u4e0d\u80fd\u4e3a\u7a7a");
         }
     }
 
     private void validateVideoId(String videoId) {
         if (videoId == null || videoId.isBlank()) {
-            throw new BizException(ErrorCode.INVALID_ARGUMENT, "videoId 不能为空");
+            throw new BizException(ErrorCode.INVALID_ARGUMENT, "videoId \u4e0d\u80fd\u4e3a\u7a7a");
         }
     }
 }

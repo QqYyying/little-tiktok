@@ -36,6 +36,12 @@ cd backend
 mvn spring-boot:run
 ```
 
+If you use IntelliJ IDEA:
+
+- Open the project root `little-tiktok`, then reload Maven after the root `pom.xml` is detected.
+- If IDEA shows a Lombok warning, click `Enable annotation processing`.
+- Prefer the Maven command `backend -> spring-boot:run` or run `MiniTikTokApplication` after Maven reload finishes.
+
 Backend default address:
 
 - `http://localhost:8080`

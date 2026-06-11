@@ -11,4 +11,5 @@ public class RecommendRpcRequest {
 
     private String userId;
     private Integer count;
+    private Integer offset;
 }

@@ -97,6 +97,24 @@
         LIMIT #{count}
     </select>
 
+    <select id="countActiveVideos" resultType="long">
+        SELECT COUNT(1)
+        FROM video v
+        WHERE v.status = 'ACTIVE'
+          AND v.deleted_at IS NULL
+    </select>
+
+    <select id="findActiveVideosPage" resultMap="VideoResultMap">
+        SELECT
+            <include refid="BaseSelectColumns"/>
+        FROM video v
+        LEFT JOIN `user` u ON u.id = v.author_id
+        WHERE v.status = 'ACTIVE'
+          AND v.deleted_at IS NULL
+        ORDER BY v.like_count DESC, v.created_at DESC
+        LIMIT #{count} OFFSET #{offset}
+    </select>
+
     <select id="findViewedVideos" resultMap="VideoResultMap">
         SELECT
             <include refid="BaseSelectColumns"/>
