@@ -14,9 +14,16 @@ app:
   monitor:
     slow-threshold-ms: 500
   storage:
+    type: s3
     local:
       base-dir: uploads
       public-base-url: /uploads
+    s3:
+      endpoint: http://127.0.0.1:9000
+      access-key: root
+      secret-key: 12345678
+      bucket: ltt
+      public-base-url: http://127.0.0.1:9000/ltt
 
 management:
   endpoints:

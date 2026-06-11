@@ -1,24 +1,31 @@
 package com.tiktok.config;
 
 import com.tiktok.common.auth.AuthInterceptor;
-import com.tiktok.infrastructure.storage.LocalFileService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.handler.MappedInterceptor;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
 
     private final AuthInterceptor authInterceptor;
-    private final LocalFileService localFileService;
+    private final String localPublicBaseUrl;
+    private final String localBaseDir;
 
-    public WebMvcConfig(AuthInterceptor authInterceptor, LocalFileService localFileService) {
+    public WebMvcConfig(AuthInterceptor authInterceptor,
+                        @Value("${app.storage.local.base-dir:uploads}") String localBaseDir,
+                        @Value("${app.storage.local.public-base-url:/uploads}") String localPublicBaseUrl) {
         this.authInterceptor = authInterceptor;
-        this.localFileService = localFileService;
+        this.localBaseDir = localBaseDir;
+        this.localPublicBaseUrl = normalizePublicBaseUrl(localPublicBaseUrl);
     }
 
     @Override
@@ -44,8 +51,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        String pattern = localFileService.getPublicBaseUrl() + "/**";
-        String location = "file:" + localFileService.getRootDir().replace("\\", "/") + "/";
+        Path rootDir = Paths.get(localBaseDir).toAbsolutePath().normalize();
+        String pattern = localPublicBaseUrl + "/**";
+        String location = "file:" + rootDir.toString().replace("\\", "/") + "/";
         registry.addResourceHandler(pattern).addResourceLocations(location);
     }
 
@@ -65,5 +73,13 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Bean
     public MappedInterceptor actuatorMetricsAuthInterceptor() {
         return new MappedInterceptor(new String[]{"/actuator/metrics", "/actuator/metrics/**"}, authInterceptor);
+    }
+
+    private String normalizePublicBaseUrl(String baseUrl) {
+        if (baseUrl == null || baseUrl.isBlank()) {
+            return "/uploads";
+        }
+        String normalized = baseUrl.startsWith("/") ? baseUrl : "/" + baseUrl;
+        return normalized.endsWith("/") ? normalized.substring(0, normalized.length() - 1) : normalized;
     }
 }

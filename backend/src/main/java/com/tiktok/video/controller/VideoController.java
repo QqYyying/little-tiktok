@@ -35,13 +35,13 @@ public class VideoController {
         this.videoService = videoService;
     }
 
-    @Operation(summary = "发布视频（本地文件上传）")
+    @Operation(summary = "发布视频（对象存储上传）")
     @PostMapping(value = "/videos", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public VideoResponse createVideo(@Valid @ModelAttribute CreateVideoUploadRequest request) {
         return videoService.createByUpload(request);
     }
 
-    @Operation(summary = "发布视频（直接提交视频地址）")
+    @Operation(summary = "发布视频（直接提交媒体地址）")
     @PostMapping(value = "/videos", consumes = MediaType.APPLICATION_JSON_VALUE)
     public VideoResponse createVideoByUrl(@Valid @RequestBody CreateVideoJsonRequest request) {
         return videoService.createByUrl(request);
@@ -50,14 +50,14 @@ public class VideoController {
     @Operation(summary = "分页查看我的视频")
     @GetMapping("/users/me/videos")
     public MyVideoPageResponse pageMyVideos(
-            @RequestParam(value = "page", required = false) @Min(value = 1, message = "必须大于等于 1") Integer page,
-            @RequestParam(value = "pageSize", required = false) @Min(value = 1, message = "必须大于等于 1")
-            @Max(value = 50, message = "不能超过 50") Integer pageSize,
+            @RequestParam(value = "page", required = false) @Min(value = 1, message = "page must be >= 1") Integer page,
+            @RequestParam(value = "pageSize", required = false) @Min(value = 1, message = "pageSize must be >= 1")
+            @Max(value = 50, message = "pageSize must be <= 50") Integer pageSize,
             @RequestParam(value = "keyword", required = false) String keyword) {
         return videoService.pageMyVideos(page, pageSize, keyword);
     }
 
-    @Operation(summary = "获取视频详情")
+    @Operation(summary = "获取我的视频详情")
     @GetMapping("/videos/{videoId}")
     public VideoResponse getVideo(@PathVariable("videoId") String videoId) {
         return videoService.getVideoDetail(videoId);

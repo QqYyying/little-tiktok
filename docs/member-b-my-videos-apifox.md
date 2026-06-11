@@ -1,15 +1,17 @@
 # 我的视频管理
 
 说明：
+
 - 认证方式：`Authorization: Bearer <token>`
-- 统一响应：后端会包装为 `ApiResponse`
+- 统一响应：后端会包装成 `ApiResponse`
 - 当前后端沿用仓库已有 `/api/v1` 前缀
 - 当前视频状态沿用仓库已有值：`ACTIVE` / `DELETED`
 - 当前数据库字段沿用仓库已有 `play_url`，但对外响应字段统一为 `videoUrl`
+- 当前上传文件默认写入 MinIO，示例 bucket 为 `ltt`
 
 ## 1. 发布视频
 
-- 接口名称：发布视频（本地文件上传）
+- 接口名称：发布视频（对象存储上传）
 - 请求方法：`POST`
 - 请求路径：`/api/v1/videos`
 - Content-Type：`multipart/form-data`
@@ -39,8 +41,8 @@
     "authorName": "alice",
     "title": "我的视频",
     "description": "视频描述",
-    "videoUrl": "/uploads/videos/4ec0d6f0c8a445fb91d9fd9446dcf257.mp4",
-    "coverUrl": "/uploads/covers/9fe9bf3c6eb64c12be8a20917c8d3e2d.jpg",
+    "videoUrl": "http://127.0.0.1:9005/ltt/videos/4ec0d6f0c8a445fb91d9fd9446dcf257.mp4",
+    "coverUrl": "http://127.0.0.1:9005/ltt/covers/9fe9bf3c6eb64c12be8a20917c8d3e2d.jpg",
     "likeCount": 0,
     "status": "ACTIVE",
     "createdAt": "2026-06-07T13:28:15",
@@ -55,20 +57,21 @@
 ```json
 {
   "code": "INVALID_ARGUMENT",
-  "message": "视频文件不能为空",
+  "message": "video file must not be empty",
   "data": null,
   "requestId": "req_xxx"
 }
 ```
 
 备注：
-- 视频文件保存到后端本地 `uploads/videos/`
-- 封面文件保存到后端本地 `uploads/covers/`
-- 仅做逻辑删除，不自动删除本地文件
+
+- 视频文件保存到 MinIO bucket `ltt/videos/`
+- 封面文件保存到 MinIO bucket `ltt/covers/`
+- 删除视频时会同步删除受系统管理的对象存储文件
 
 ## 2. 发布视频（JSON 兼容模式）
 
-- 接口名称：发布视频（直接提交地址）
+- 接口名称：发布视频（直接提交媒体地址）
 - 请求方法：`POST`
 - 请求路径：`/api/v1/videos`
 - Content-Type：`application/json`
@@ -121,8 +124,8 @@ Query 参数：
         "authorName": "alice",
         "title": "我的视频",
         "description": "视频描述",
-        "videoUrl": "/uploads/videos/demo.mp4",
-        "coverUrl": "/uploads/covers/demo.jpg",
+        "videoUrl": "http://127.0.0.1:9005/ltt/videos/demo.mp4",
+        "coverUrl": "http://127.0.0.1:9005/ltt/covers/demo.jpg",
         "likeCount": 0,
         "status": "ACTIVE",
         "createdAt": "2026-06-07T13:28:15",
@@ -134,25 +137,14 @@ Query 参数：
 }
 ```
 
-失败响应示例：
+## 4. 获取我的视频详情
 
-```json
-{
-  "code": "INVALID_ARGUMENT",
-  "message": "pageSize 不能超过 50",
-  "data": null,
-  "requestId": "req_xxx"
-}
-```
-
-## 4. 获取视频详情
-
-- 接口名称：获取视频详情
+- 接口名称：获取我的视频详情
 - 请求方法：`GET`
 - 请求路径：`/api/v1/videos/{videoId}`
 - 是否分页：否
 - 是否记录日志：是
-- 权限说明：当前实现要求登录
+- 权限说明：仅作者本人或管理员可访问
 
 Path 参数：
 
@@ -164,8 +156,8 @@ Path 参数：
 
 ```json
 {
-  "code": "NOT_FOUND",
-  "message": "视频不存在",
+  "code": "PERMISSION_DENIED",
+  "message": "无权限操作该资源",
   "data": null,
   "requestId": "req_xxx"
 }
@@ -178,7 +170,7 @@ Path 参数：
 - 请求路径：`/api/v1/videos/{videoId}`
 - 是否分页：否
 - 是否记录日志：是
-- 权限说明：作者本人或管理员
+- 权限说明：仅作者本人或管理员可删除
 
 Path 参数：
 
@@ -197,17 +189,6 @@ Path 参数：
     "deleted": true,
     "deletedAt": "2026-06-07T13:40:00"
   },
-  "requestId": "req_xxx"
-}
-```
-
-失败响应示例：
-
-```json
-{
-  "code": "PERMISSION_DENIED",
-  "message": "无权限操作该资源",
-  "data": null,
   "requestId": "req_xxx"
 }
 ```
@@ -232,6 +213,13 @@ curl "http://localhost:8080/api/v1/users/me/videos?page=1&pageSize=10" \
   -H "Authorization: Bearer <token>"
 ```
 
+查看我的视频详情：
+
+```bash
+curl "http://localhost:8080/api/v1/videos/vid_1234567890" \
+  -H "Authorization: Bearer <token>"
+```
+
 删除视频：
 
 ```bash
@@ -245,7 +233,9 @@ curl -X DELETE "http://localhost:8080/api/v1/videos/vid_1234567890" \
 - 未登录上传视频，预期 `401`
 - 上传非法后缀文件，预期 `400`
 - 分页查看我的视频
+- 非作者访问我的视频详情失败，预期 `403`
 - 删除自己的视频成功
 - 删除他人视频失败，预期 `403`
 - 删除不存在视频失败，预期 `404`
 - 删除后我的视频列表不再返回该视频
+- 删除后 MinIO 对应对象不存在

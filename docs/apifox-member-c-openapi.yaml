@@ -1,0 +1,323 @@
+openapi: 3.0.3
+info:
+  title: Little TikTok - Member C APIs
+  version: 1.0.0
+  description: 成员 C 负责的视频流、浏览上报、点赞与静态视频播放相关接口。
+servers:
+  - url: http://localhost:8080
+    description: Local backend
+tags:
+  - name: Member C - Video Feed
+    description: 视频流与互动接口
+  - name: Member C - Static Media
+    description: 静态视频资源地址
+security:
+  - bearerAuth: []
+paths:
+  /api/v1/recommend/feed:
+    get:
+      tags:
+        - Member C - Video Feed
+      summary: 获取推荐视频流
+      description: 前端通过 count 和 offset 分页拉取推荐流，用于连续下滑加载。
+      operationId: getRecommendFeed
+      parameters:
+        - name: count
+          in: query
+          required: false
+          description: 每次返回的视频数量，默认 5，最大 20。
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 20
+            default: 5
+          example: 5
+        - name: offset
+          in: query
+          required: false
+          description: 分页偏移量，第一次为 0，后续可以按已加载数量递增。
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          example: 0
+      responses:
+        "200":
+          description: 获取成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecommendFeedApiResponse"
+              example:
+                code: OK
+                message: success
+                requestId: req-demo
+                data:
+                  items:
+                    - videoId: vid_5005
+                      authorId: usr_1004
+                      authorName: david_buaa
+                      title: BJTU Minghu summer view
+                      description: Campus scenery sample video
+                      videoUrl: /uploads/videos/5h264.mp4
+                      coverUrl: /tiktok-covers/20260515_bjtu_lake.jpg
+                      likeCount: 3
+                      liked: false
+                      createdAt: "2026-05-15T18:25:00"
+                  hasMore: true
+  /api/v1/videos/{videoId}/view:
+    post:
+      tags:
+        - Member C - Video Feed
+      summary: 上报视频浏览记录
+      description: 当前用户观看视频后调用，用于记录 video_view。
+      operationId: reportVideoView
+      parameters:
+        - $ref: "#/components/parameters/VideoIdPath"
+      responses:
+        "200":
+          description: 上报成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VideoViewApiResponse"
+              example:
+                code: OK
+                message: success
+                requestId: req-demo
+                data:
+                  videoId: vid_5005
+                  viewed: true
+  /api/v1/videos/{videoId}/like:
+    post:
+      tags:
+        - Member C - Video Feed
+      summary: 点赞视频
+      description: 当前用户给视频点赞。重复点赞不会重复增加点赞数。
+      operationId: likeVideo
+      parameters:
+        - $ref: "#/components/parameters/VideoIdPath"
+      responses:
+        "200":
+          description: 点赞成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LikeStatusApiResponse"
+              example:
+                code: OK
+                message: success
+                requestId: req-demo
+                data:
+                  videoId: vid_5005
+                  liked: true
+                  likeCount: 4
+    delete:
+      tags:
+        - Member C - Video Feed
+      summary: 取消点赞
+      description: 当前用户取消视频点赞。重复取消不会让点赞数小于 0。
+      operationId: unlikeVideo
+      parameters:
+        - $ref: "#/components/parameters/VideoIdPath"
+      responses:
+        "200":
+          description: 取消点赞成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LikeStatusApiResponse"
+              example:
+                code: OK
+                message: success
+                requestId: req-demo
+                data:
+                  videoId: vid_5005
+                  liked: false
+                  likeCount: 3
+  /api/v1/videos/{videoId}/like/status:
+    get:
+      tags:
+        - Member C - Video Feed
+      summary: 查询点赞状态
+      description: 查询当前用户是否已点赞该视频，并返回当前点赞数。
+      operationId: getLikeStatus
+      parameters:
+        - $ref: "#/components/parameters/VideoIdPath"
+      responses:
+        "200":
+          description: 查询成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LikeStatusApiResponse"
+              example:
+                code: OK
+                message: success
+                requestId: req-demo
+                data:
+                  videoId: vid_5005
+                  liked: true
+                  likeCount: 4
+  /uploads/videos/{filename}:
+    get:
+      tags:
+        - Member C - Static Media
+      summary: 获取本地视频文件
+      description: 浏览器 video 标签最终请求的视频资源地址，不属于 /api/v1 业务接口。
+      operationId: getUploadedVideo
+      security: []
+      parameters:
+        - name: filename
+          in: path
+          required: true
+          description: 视频文件名。
+          schema:
+            type: string
+          example: 5h264.mp4
+      responses:
+        "200":
+          description: 视频文件流
+          content:
+            video/mp4:
+              schema:
+                type: string
+                format: binary
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    VideoIdPath:
+      name: videoId
+      in: path
+      required: true
+      description: 视频 ID。
+      schema:
+        type: string
+      example: vid_5005
+  schemas:
+    ApiResponseBase:
+      type: object
+      properties:
+        code:
+          type: string
+          example: OK
+        message:
+          type: string
+          example: success
+        requestId:
+          type: string
+          example: req-demo
+      required:
+        - code
+        - message
+        - data
+    RecommendFeedApiResponse:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            data:
+              $ref: "#/components/schemas/RecommendFeedResponse"
+    VideoViewApiResponse:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            data:
+              $ref: "#/components/schemas/VideoViewResponse"
+    LikeStatusApiResponse:
+      allOf:
+        - $ref: "#/components/schemas/ApiResponseBase"
+        - type: object
+          properties:
+            data:
+              $ref: "#/components/schemas/LikeStatusResponse"
+    RecommendFeedResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/RecommendVideoItem"
+        hasMore:
+          type: boolean
+          example: true
+      required:
+        - items
+        - hasMore
+    RecommendVideoItem:
+      type: object
+      properties:
+        videoId:
+          type: string
+          example: vid_5005
+        authorId:
+          type: string
+          example: usr_1004
+        authorName:
+          type: string
+          example: david_buaa
+        title:
+          type: string
+          example: BJTU Minghu summer view
+        description:
+          type: string
+          example: Campus scenery sample video
+        videoUrl:
+          type: string
+          example: /uploads/videos/5h264.mp4
+        coverUrl:
+          type: string
+          example: /tiktok-covers/20260515_bjtu_lake.jpg
+        likeCount:
+          type: integer
+          example: 3
+        liked:
+          type: boolean
+          example: false
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-05-15T18:25:00"
+      required:
+        - videoId
+        - authorId
+        - authorName
+        - title
+        - videoUrl
+        - coverUrl
+        - likeCount
+        - liked
+        - createdAt
+    VideoViewResponse:
+      type: object
+      properties:
+        videoId:
+          type: string
+          example: vid_5005
+        viewed:
+          type: boolean
+          example: true
+      required:
+        - videoId
+        - viewed
+    LikeStatusResponse:
+      type: object
+      properties:
+        videoId:
+          type: string
+          example: vid_5005
+        liked:
+          type: boolean
+          example: true
+        likeCount:
+          type: integer
+          example: 4
+      required:
+        - videoId
+        - liked
+        - likeCount

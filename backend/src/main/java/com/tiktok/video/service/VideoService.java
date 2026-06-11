@@ -43,7 +43,7 @@ public class VideoService {
         PermissionUtils.requireLogin();
         MultipartFile videoFile = request.getFile();
         if (videoFile == null || videoFile.isEmpty()) {
-            throw new BizException(ErrorCode.INVALID_ARGUMENT, "视频文件不能为空");
+            throw new BizException(ErrorCode.INVALID_ARGUMENT, "video file must not be empty");
         }
 
         StoredFile storedVideo = fileService.storeVideo(videoFile);
@@ -102,6 +102,7 @@ public class VideoService {
     public VideoResponse getVideoDetail(String videoId) {
         PermissionUtils.requireLogin();
         Video video = requireVisibleVideo(videoId);
+        PermissionUtils.requireOwnerOrAdmin(video.getAuthorId());
         return toResponse(video, video.getAuthorName());
     }
 
@@ -113,8 +114,11 @@ public class VideoService {
         LocalDateTime now = LocalDateTime.now();
         int updatedRows = videoMapper.logicalDelete(video.getId(), VIDEO_STATUS_DELETED, now, now);
         if (updatedRows == 0) {
-            throw new BizException(ErrorCode.CONFLICT, "视频已被删除");
+            throw new BizException(ErrorCode.CONFLICT, "video has already been deleted");
         }
+
+        fileService.delete(video.getVideoUrl());
+        fileService.delete(video.getCoverUrl());
 
         DeleteVideoResponse response = new DeleteVideoResponse();
         response.setVideoId(video.getId());
@@ -126,11 +130,11 @@ public class VideoService {
     private Video requireVisibleVideo(String videoId) {
         String normalizedVideoId = trimToNull(videoId);
         if (normalizedVideoId == null) {
-            throw new BizException(ErrorCode.INVALID_ARGUMENT, "videoId 不能为空");
+            throw new BizException(ErrorCode.INVALID_ARGUMENT, "videoId must not be empty");
         }
         Video video = videoMapper.selectById(normalizedVideoId);
         if (video == null || VIDEO_STATUS_DELETED.equalsIgnoreCase(video.getStatus())) {
-            throw new BizException(ErrorCode.NOT_FOUND, "视频不存在");
+            throw new BizException(ErrorCode.NOT_FOUND, "video not found");
         }
         return video;
     }
@@ -171,10 +175,10 @@ public class VideoService {
     private String normalizeTitle(String title) {
         String normalized = trimToNull(title);
         if (normalized == null) {
-            throw new BizException(ErrorCode.INVALID_ARGUMENT, "title 不能为空");
+            throw new BizException(ErrorCode.INVALID_ARGUMENT, "title must not be empty");
         }
         if (normalized.length() > 128) {
-            throw new BizException(ErrorCode.INVALID_ARGUMENT, "title 长度不能超过 128");
+            throw new BizException(ErrorCode.INVALID_ARGUMENT, "title length must be <= 128");
         }
         return normalized;
     }
@@ -182,7 +186,7 @@ public class VideoService {
     private String normalizeDescription(String description) {
         String normalized = trimToEmpty(description);
         if (normalized.length() > 500) {
-            throw new BizException(ErrorCode.INVALID_ARGUMENT, "description 长度不能超过 500");
+            throw new BizException(ErrorCode.INVALID_ARGUMENT, "description length must be <= 500");
         }
         return normalized;
     }
@@ -190,10 +194,10 @@ public class VideoService {
     private String normalizeUrl(String value, String fieldName) {
         String normalized = trimToNull(value);
         if (normalized == null) {
-            throw new BizException(ErrorCode.INVALID_ARGUMENT, fieldName + " 不能为空");
+            throw new BizException(ErrorCode.INVALID_ARGUMENT, fieldName + " must not be empty");
         }
         if (normalized.length() > 512) {
-            throw new BizException(ErrorCode.INVALID_ARGUMENT, fieldName + " 长度不能超过 512");
+            throw new BizException(ErrorCode.INVALID_ARGUMENT, fieldName + " length must be <= 512");
         }
         return normalized;
     }

@@ -7,6 +7,7 @@ Mini TikTok course project repository.
 - Backend: Spring Boot 3, Spring Security, MyBatis, JWT, Actuator, Prometheus
 - Frontend: Next.js
 - Database: MySQL
+- Object storage: MinIO
 
 ## Backend startup
 
@@ -15,6 +16,7 @@ Requirements:
 - JDK 17 or 21
 - Maven 3.9+
 - MySQL 8.x
+- MinIO
 
 Important:
 
@@ -65,18 +67,44 @@ Recommended manual checks before running the patch:
 - `video` table should contain `id`, `author_id`, `title`, `play_url`, `cover_url`, `like_count`, `status`
 - If `role`, `updated_at`, `description`, `deleted_at` or extended `request_log` columns are missing, apply the incremental patch
 
-## Local file upload
+## MinIO storage
 
-Member B module uses local storage instead of object storage.
+Member D module stores uploaded media in MinIO by default.
 
-- Video files are stored under `backend/uploads/videos/`
-- Cover files are stored under `backend/uploads/covers/`
-- Public access path is `/uploads/**`
+- Backend storage switch: `backend/src/main/resources/application.yml`
+- Current API endpoint: `http://127.0.0.1:9005`
+- Current bucket: `ltt`
+- Public object base URL: `http://127.0.0.1:9005/ltt`
 
-Example:
+Team setup rule:
 
-- `backend/uploads/videos/demo.mp4`
-- `http://localhost:8080/uploads/videos/demo.mp4`
+- Each team member should install and run a local MinIO instance before testing upload / object storage.
+- Please follow the first four sections of this tutorial:
+- https://blog.csdn.net/m0_58769790/article/details/144744609
+
+Recommended execution summary for our project on Windows:
+
+1. Create a local MinIO working directory such as `D:\Minio`
+2. Under it, prepare folders like `bin`, `data`, and `logs`
+3. Download the Windows MinIO binaries mentioned in the tutorial and place them in `D:\Minio\bin`
+4. Start MinIO with the command below from the `bin` directory
+
+Example MinIO startup command used by this project:
+
+```powershell
+setx MINIO_ROOT_USER minioadmin
+setx MINIO_ROOT_PASSWORD minioadmin
+.\minio.exe server D:\develpo\minio\data --console-address "127.0.0.1:9000" --address "127.0.0.1:9005"
+```
+
+Notes:
+
+- `9005` is the S3 API port used by the backend.
+- `9000` is only the MinIO WebUI port.
+- Upload and delete now operate on MinIO objects.
+- Local storage remains available as a fallback mode only when `app.storage.type=local`.
+- After startup, open `http://127.0.0.1:9000` to log into MinIO WebUI.
+- The backend must connect to `http://127.0.0.1:9005`, not `9000`.
 
 Upload limits are configured in:
 
@@ -122,19 +150,20 @@ Recommended defense demo order:
 1. Open Swagger and show existing auth / log / monitoring foundation
 2. Register a new user on `/login`
 3. Log in and obtain JWT-based session
-4. Upload a local video file on `/upload`
-5. Open returned `videoUrl` to prove local file access works
+4. Upload a video file on `/upload` and verify the object appears in MinIO bucket `ltt`
+5. Open returned `videoUrl` to prove MinIO object access works
 6. Visit `/my-videos` and show paginated list
-7. Delete your own video
-8. Use another token in Apifox to show `403` on deleting someone else's video
+7. Show that `/api/v1/videos/{videoId}` only allows the owner or admin to read the detail
+8. Delete your own video and verify the object is removed from MinIO
+9. Use another token in Apifox to show `403` on deleting someone else's video
 
 ## Apifox
 
-Apifox-ready notes for Member B module:
+Apifox-ready notes for the video management module:
 
 - `docs/member-b-my-videos-apifox.md`
 
 ## Remaining notes
 
 - Logging, request input/output, request cost time, JWT auth, and OpenAPI were reused from the existing backend foundation.
-- Recommendation / like / feed modules still contain unfinished or placeholder parts outside Member B scope.
+- Recommendation / like / feed modules still contain unfinished or placeholder parts outside Member D scope.
