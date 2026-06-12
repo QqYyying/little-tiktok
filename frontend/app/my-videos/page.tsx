@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { FavoriteList, MyVideoList, ViewHistoryList } from '@/src/components/my-videos'
+import { FavoriteList, LikedVideoList, MyVideoList, ViewHistoryList } from '@/src/components/my-videos'
 
-type Tab = 'videos' | 'favorites' | 'history'
+type Tab = 'videos' | 'liked' | 'favorites' | 'history'
 
 export default function MyVideosPage() {
   const [activeTab, setActiveTab] = useState<Tab>('videos')
@@ -21,6 +21,12 @@ export default function MyVideosPage() {
             我的视频
           </button>
           <button
+            onClick={() => setActiveTab('liked')}
+            className={`flex-1 py-2 text-center ${activeTab === 'liked' ? 'border-b-2 border-black font-bold' : 'text-gray-500'}`}
+          >
+            我喜欢的
+          </button>
+          <button
             onClick={() => setActiveTab('favorites')}
             className={`flex-1 py-2 text-center ${activeTab === 'favorites' ? 'border-b-2 border-black font-bold' : 'text-gray-500'}`}
           >
@@ -35,6 +41,7 @@ export default function MyVideosPage() {
         </div>
 
         {activeTab === 'videos' && <MyVideoList />}
+        {activeTab === 'liked' && <LikedVideoList />}
         {activeTab === 'favorites' && <FavoriteList />}
         {activeTab === 'history' && <ViewHistoryList />}
       </div>

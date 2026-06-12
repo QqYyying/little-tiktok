@@ -57,6 +57,15 @@ public class VideoController {
         return videoService.pageMyVideos(page, pageSize, keyword);
     }
 
+    @Operation(summary = "分页查看我点赞的视频")
+    @GetMapping("/users/me/videos/liked")
+    public MyVideoPageResponse pageLikedVideos(
+            @RequestParam(value = "page", required = false) @Min(value = 1, message = "page must be >= 1") Integer page,
+            @RequestParam(value = "pageSize", required = false) @Min(value = 1, message = "pageSize must be >= 1")
+            @Max(value = 50, message = "pageSize must be <= 50") Integer pageSize) {
+        return videoService.pageLikedVideos(page, pageSize);
+    }
+
     @Operation(summary = "获取我的视频详情")
     @GetMapping("/videos/{videoId}")
     public VideoResponse getVideo(@PathVariable("videoId") String videoId) {

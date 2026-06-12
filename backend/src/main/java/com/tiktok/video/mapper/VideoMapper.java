@@ -27,6 +27,12 @@ public interface VideoMapper {
 
     List<Video> findViewedVideos(@Param("userId") String userId);
 
+    long countLikedVideos(@Param("userId") String userId);
+
+    List<Video> findLikedVideosPage(@Param("userId") String userId,
+                                     @Param("limit") int limit,
+                                     @Param("offset") int offset);
+
     boolean existsVisibleVideo(@Param("videoId") String videoId);
 
     int incrementLikeCount(@Param("videoId") String videoId);

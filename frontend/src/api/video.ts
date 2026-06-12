@@ -161,3 +161,20 @@ export async function getViewHistory(): Promise<ViewHistoryResponse> {
     items: data.items.map(normalizeViewHistoryItem),
   }
 }
+
+export async function getLikedVideos(page: number = 1, pageSize: number = 10): Promise<MyVideosPageData> {
+  const params = new URLSearchParams({
+    page: String(page),
+    pageSize: String(pageSize),
+  })
+
+  const response = await fetch(`${VIDEO_API_BASE}/users/me/videos/liked?${params.toString()}`, {
+    method: 'GET',
+    headers: buildHeaders(),
+  })
+  const data = await unwrapResponse<MyVideosPageData>(response)
+  return {
+    ...data,
+    records: data.records.map(normalizeVideoRecord),
+  }
+}

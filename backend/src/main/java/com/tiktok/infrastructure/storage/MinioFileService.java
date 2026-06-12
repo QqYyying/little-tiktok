@@ -35,16 +35,12 @@ public class MinioFileService implements FileService {
     private final String publicBaseUrl;
     private volatile boolean bucketInitialized;
 
-    public MinioFileService(@Value("${app.storage.s3.endpoint}") String endpoint,
-                            @Value("${app.storage.s3.access-key}") String accessKey,
-                            @Value("${app.storage.s3.secret-key}") String secretKey,
+    public MinioFileService(MinioClient minioClient,
+                            @Value("${app.storage.s3.endpoint}") String endpoint,
                             @Value("${app.storage.s3.bucket}") String bucket,
                             @Value("${app.storage.s3.public-base-url}") String publicBaseUrl) {
+        this.minioClient = minioClient;
         this.endpoint = normalizeEndpoint(endpoint);
-        this.minioClient = MinioClient.builder()
-                .endpoint(this.endpoint)
-                .credentials(accessKey, secretKey)
-                .build();
         this.bucket = bucket;
         this.publicBaseUrl = normalizePublicBaseUrl(publicBaseUrl);
     }

@@ -127,6 +127,28 @@
         ORDER BY vv.viewed_at DESC, v.created_at DESC
     </select>
 
+    <select id="countLikedVideos" resultType="long">
+        SELECT COUNT(1)
+        FROM video_like vl
+        INNER JOIN video v ON vl.video_id = v.id
+        WHERE vl.user_id = #{userId}
+          AND v.status = 'ACTIVE'
+          AND v.deleted_at IS NULL
+    </select>
+
+    <select id="findLikedVideosPage" resultMap="VideoResultMap">
+        SELECT
+            <include refid="BaseSelectColumns"/>
+        FROM video v
+        LEFT JOIN `user` u ON u.id = v.author_id
+        INNER JOIN video_like vl ON vl.video_id = v.id
+        WHERE vl.user_id = #{userId}
+          AND v.status = 'ACTIVE'
+          AND v.deleted_at IS NULL
+        ORDER BY vl.created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
     <select id="existsVisibleVideo" resultType="boolean">
         SELECT COUNT(1) > 0
         FROM video

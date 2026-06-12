@@ -99,6 +99,29 @@ public class VideoService {
         return response;
     }
 
+    public MyVideoPageResponse pageLikedVideos(Integer page, Integer pageSize) {
+        PermissionUtils.requireLogin();
+        int normalizedPage = page == null || page < 1 ? DEFAULT_PAGE : page;
+        int normalizedPageSize = pageSize == null || pageSize < 1 ? DEFAULT_PAGE_SIZE : Math.min(pageSize, MAX_PAGE_SIZE);
+        int offset = (normalizedPage - 1) * normalizedPageSize;
+
+        long total = videoMapper.countLikedVideos(UserContext.getCurrentUserId());
+        List<VideoResponse> records = videoMapper.findLikedVideosPage(
+                        UserContext.getCurrentUserId(),
+                        normalizedPageSize,
+                        offset
+                ).stream()
+                .map(video -> toResponse(video, video.getAuthorName()))
+                .toList();
+
+        MyVideoPageResponse response = new MyVideoPageResponse();
+        response.setTotal(total);
+        response.setPage(normalizedPage);
+        response.setPageSize(normalizedPageSize);
+        response.setRecords(records);
+        return response;
+    }
+
     public VideoResponse getVideoDetail(String videoId) {
         PermissionUtils.requireLogin();
         Video video = requireVisibleVideo(videoId);
