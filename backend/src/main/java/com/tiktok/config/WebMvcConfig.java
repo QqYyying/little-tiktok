@@ -35,6 +35,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .excludePathPatterns(
                         "/api/v1/auth/register",
                         "/api/v1/auth/login",
+                        "/api/v1/videos/play/**",
                         "/actuator/health",
                         "/actuator/info",
                         "/actuator/prometheus",
@@ -67,6 +68,15 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true)
+                .maxAge(3600);
+        
+        registry.addMapping("/uploads/**")
+                .allowedOrigins(
+                        "http://localhost:3000",
+                        "http://127.0.0.1:3000"
+                )
+                .allowedMethods("GET", "OPTIONS")
+                .allowedHeaders("*")
                 .maxAge(3600);
     }
 
