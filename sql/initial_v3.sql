@@ -13,13 +13,13 @@ INSERT INTO `user` (`id`, `username`, `password_hash`, `status`, `role`, `create
 ('usr_1004', 'david_buaa', '$2a$10$m38NCjCd91lGqo02p6xTC.Nq4CFdHFZSXJlM9TxhSsYEZLbV1Ywtq', 'ACTIVE', 'ADMIN', '2026-05-04 09:05:00', '2026-05-04 09:05:00'),
 ('usr_1005', 'eva_star',   '$2a$10$m38NCjCd91lGqo02p6xTC.Nq4CFdHFZSXJlM9TxhSsYEZLbV1Ywtq', 'BANNED', 'USER', '2026-05-05 16:40:00', '2026-05-05 16:40:00');
 
-INSERT INTO `video` (`id`, `author_id`, `title`, `description`, `play_url`, `cover_url`, `like_count`, `status`, `created_at`, `updated_at`, `deleted_at`) VALUES
-('vid_5001', 'usr_1001', 'My first Rust kernel build passed', 'Rust OS build process record', '/tiktok-videos/20260521_rust_os.mp4', '/tiktok-covers/20260521_rust_os.jpg', 1, 'ACTIVE', '2026-05-10 08:00:00', '2026-05-10 08:00:00', NULL),
-('vid_5002', 'usr_1001', 'QEMU RISC-V demo', 'QEMU and RISC-V runtime demo', '/tiktok-videos/20260511_qemu_riscv.mp4', '/tiktok-covers/20260511_qemu_riscv.jpg', 0, 'ACTIVE', '2026-05-11 09:30:00', '2026-05-11 09:30:00', NULL),
-('vid_5003', 'usr_1002', 'Spring Boot graceful shutdown practice', 'Backend graceful shutdown example', '/tiktok-videos/20260512_springboot.mp4', '/tiktok-covers/20260512_springboot.jpg', 2, 'ACTIVE', '2026-05-12 21:00:00', '2026-05-12 21:00:00', NULL),
-('vid_5004', 'usr_1003', 'Flutter smooth scroll component', 'Mobile scrolling interaction example', '/tiktok-videos/20260514_flutter_scroll.mp4', '/tiktok-covers/20260514_flutter_scroll.jpg', 0, 'ACTIVE', '2026-05-14 15:00:00', '2026-05-14 15:00:00', NULL),
-('vid_5005', 'usr_1004', 'BJTU Minghu summer view', 'Campus scenery sample video', '/tiktok-videos/20260515_bjtu_lake.mp4', '/tiktok-covers/20260515_bjtu_lake.jpg', 3, 'ACTIVE', '2026-05-15 18:25:00', '2026-05-15 18:25:00', NULL),
-('vid_5006', 'usr_1002', 'Deleted test video', 'Deleted video example', '/tiktok-videos/20260516_test_bad.mp4', '/tiktok-covers/20260516_test_bad.jpg', 0, 'DELETED', '2026-05-16 10:00:00', '2026-05-16 10:00:00', '2026-05-16 12:00:00');
+INSERT INTO `video` (`id`, `author_id`, `title`, `description`, `play_url`, `cover_url`, `like_count`, `favorite_count`, `status`, `created_at`, `updated_at`, `deleted_at`) VALUES
+('vid_5001', 'usr_1001', 'My first Rust kernel build passed', 'Rust OS build process record', '/tiktok-videos/20260521_rust_os.mp4', '/tiktok-covers/20260521_rust_os.jpg', 1, 0, 'ACTIVE', '2026-05-10 08:00:00', '2026-05-10 08:00:00', NULL),
+('vid_5002', 'usr_1001', 'QEMU RISC-V demo', 'QEMU and RISC-V runtime demo', '/tiktok-videos/20260511_qemu_riscv.mp4', '/tiktok-covers/20260511_qemu_riscv.jpg', 0, 0, 'ACTIVE', '2026-05-11 09:30:00', '2026-05-11 09:30:00', NULL),
+('vid_5003', 'usr_1002', 'Spring Boot graceful shutdown practice', 'Backend graceful shutdown example', '/tiktok-videos/20260512_springboot.mp4', '/tiktok-covers/20260512_springboot.jpg', 2, 0, 'ACTIVE', '2026-05-12 21:00:00', '2026-05-12 21:00:00', NULL),
+('vid_5004', 'usr_1003', 'Flutter smooth scroll component', 'Mobile scrolling interaction example', '/tiktok-videos/20260514_flutter_scroll.mp4', '/tiktok-covers/20260514_flutter_scroll.jpg', 0, 0, 'ACTIVE', '2026-05-14 15:00:00', '2026-05-14 15:00:00', NULL),
+('vid_5005', 'usr_1004', 'BJTU Minghu summer view', 'Campus scenery sample video', '/tiktok-videos/20260515_bjtu_lake.mp4', '/tiktok-covers/20260515_bjtu_lake.jpg', 3, 0, 'ACTIVE', '2026-05-15 18:25:00', '2026-05-15 18:25:00', NULL),
+('vid_5006', 'usr_1002', 'Deleted test video', 'Deleted video example', '/tiktok-videos/20260516_test_bad.mp4', '/tiktok-covers/20260516_test_bad.jpg', 0, 0, 'DELETED', '2026-05-16 10:00:00', '2026-05-16 10:00:00', '2026-05-16 12:00:00');
 
 INSERT INTO `video_like` (`id`, `user_id`, `video_id`, `created_at`) VALUES
 ('like_9001', 'usr_1001', 'vid_5005', '2026-05-15 19:00:00'),

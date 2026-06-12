@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tiktok.favorite.mapper.FavoriteMapper">
+
+    <resultMap id="VideoResultMap" type="com.tiktok.video.entity.Video">
+        <id property="id" column="id"/>
+        <result property="authorId" column="author_id"/>
+        <result property="authorName" column="author_name"/>
+        <result property="title" column="title"/>
+        <result property="description" column="description"/>
+        <result property="videoUrl" column="play_url"/>
+        <result property="coverUrl" column="cover_url"/>
+        <result property="likeCount" column="like_count"/>
+        <result property="favoriteCount" column="favorite_count"/>
+        <result property="status" column="status"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="deletedAt" column="deleted_at"/>
+    </resultMap>
+
+    <sql id="BaseSelectColumns">
+        v.id,
+        v.author_id,
+        u.username AS author_name,
+        v.title,
+        v.description,
+        v.play_url,
+        v.cover_url,
+        v.like_count,
+        v.favorite_count,
+        v.status,
+        v.created_at,
+        v.updated_at,
+        v.deleted_at
+    </sql>
+
+    <insert id="insertFavorite">
+        INSERT IGNORE INTO video_favorite (id, user_id, video_id)
+        VALUES (#{id}, #{userId}, #{videoId})
+    </insert>
+
+    <delete id="deleteFavorite">
+        DELETE FROM video_favorite
+        WHERE user_id = #{userId}
+          AND video_id = #{videoId}
+    </delete>
+
+    <select id="existsFavorite" resultType="int">
+        SELECT COUNT(1)
+        FROM video_favorite
+        WHERE user_id = #{userId}
+          AND video_id = #{videoId}
+    </select>
+
+    <select id="countFavorite" resultType="int">
+        SELECT COUNT(1)
+        FROM video_favorite
+        WHERE video_id = #{videoId}
+    </select>
+
+    <select id="countUserFavorites" resultType="long">
+        SELECT COUNT(1)
+        FROM video_favorite vf
+        INNER JOIN video v ON vf.video_id = v.id
+        WHERE vf.user_id = #{userId}
+          AND v.status = 'ACTIVE'
+          AND v.deleted_at IS NULL
+    </select>
+
+    <select id="findUserFavoritesPage" resultMap="VideoResultMap">
+        SELECT
+            <include refid="BaseSelectColumns"/>
+        FROM video v
+        LEFT JOIN `user` u ON u.id = v.author_id
+        INNER JOIN video_favorite vf ON vf.video_id = v.id
+        WHERE vf.user_id = #{userId}
+          AND v.status = 'ACTIVE'
+          AND v.deleted_at IS NULL
+        ORDER BY vf.created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+</mapper>

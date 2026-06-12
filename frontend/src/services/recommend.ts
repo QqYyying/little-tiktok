@@ -23,7 +23,9 @@ interface RecommendFeedItemDto {
   videoUrl: string
   coverUrl: string
   likeCount: number
+  favoriteCount: number
   liked: boolean
+  favorited: boolean
   createdAt: string
 }
 
@@ -50,9 +52,9 @@ function mapVideo(item: RecommendFeedItemDto): Video {
     url: videoUrl,
     coverUrl,
     likeCount: item.likeCount,
-    favoriteCount: 0,
+    favoriteCount: item.favoriteCount ?? 0,
     liked: item.liked,
-    favorited: false,
+    favorited: item.favorited,
     createdAt: item.createdAt,
   }
 }

@@ -13,6 +13,7 @@ export function VideoFeed() {
     currentVideo,
     nextVideoToPreload,
     currentVideoLikePending,
+    currentVideoFavoritePending,
     currentIndex,
     videos,
     nextVideo,
@@ -161,6 +162,7 @@ export function VideoFeed() {
           onLike={toggleLike}
           onFavorite={toggleFavorite}
           likePending={currentVideoLikePending}
+          favoritePending={currentVideoFavoritePending}
         />
       </div>
 

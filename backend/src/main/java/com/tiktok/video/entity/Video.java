@@ -12,6 +12,7 @@ public class Video {
     private String videoUrl;
     private String coverUrl;
     private Integer likeCount;
+    private Integer favoriteCount;
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -79,6 +80,14 @@ public class Video {
 
     public void setLikeCount(Integer likeCount) {
         this.likeCount = likeCount;
+    }
+
+    public Integer getFavoriteCount() {
+        return favoriteCount;
+    }
+
+    public void setFavoriteCount(Integer favoriteCount) {
+        this.favoriteCount = favoriteCount;
     }
 
     public String getStatus() {

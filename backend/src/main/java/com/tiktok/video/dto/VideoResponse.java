@@ -12,6 +12,9 @@ public class VideoResponse {
     private String videoUrl;
     private String coverUrl;
     private Integer likeCount;
+    private Integer favoriteCount;
+    private Boolean liked;
+    private Boolean favorited;
     private String status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -78,6 +81,30 @@ public class VideoResponse {
 
     public void setLikeCount(Integer likeCount) {
         this.likeCount = likeCount;
+    }
+
+    public Integer getFavoriteCount() {
+        return favoriteCount;
+    }
+
+    public void setFavoriteCount(Integer favoriteCount) {
+        this.favoriteCount = favoriteCount;
+    }
+
+    public Boolean getLiked() {
+        return liked;
+    }
+
+    public void setLiked(Boolean liked) {
+        this.liked = liked;
+    }
+
+    public Boolean getFavorited() {
+        return favorited;
+    }
+
+    public void setFavorited(Boolean favorited) {
+        this.favorited = favorited;
     }
 
     public String getStatus() {

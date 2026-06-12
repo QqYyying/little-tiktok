@@ -33,6 +33,7 @@ CREATE TABLE `video` (
   `play_url` varchar(512) NOT NULL COMMENT 'video play url',
   `cover_url` varchar(512) NOT NULL DEFAULT '' COMMENT 'video cover url',
   `like_count` int NOT NULL DEFAULT 0 COMMENT 'like count',
+  `favorite_count` int NOT NULL DEFAULT 0 COMMENT 'favorite count',
   `status` varchar(16) NOT NULL DEFAULT 'ACTIVE' COMMENT 'ACTIVE or DELETED',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'created time',
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'updated time',
@@ -52,6 +53,17 @@ CREATE TABLE `video_view` (
   KEY `idx_video_view_user_id` (`user_id`),
   KEY `idx_video_view_video_id` (`video_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='video view table';
+
+CREATE TABLE `video_favorite` (
+  `id` varchar(64) NOT NULL COMMENT 'favorite record id, for example fav_xxx',
+  `user_id` varchar(64) NOT NULL COMMENT 'user id',
+  `video_id` varchar(64) NOT NULL COMMENT 'video id',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'favorite time',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_video_favorite_user_video` (`user_id`, `video_id`),
+  KEY `idx_video_favorite_user_id` (`user_id`),
+  KEY `idx_video_favorite_video_id` (`video_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='video favorite table';
 
 CREATE TABLE `video_like` (
   `id` varchar(64) NOT NULL COMMENT 'like record id, for example like_xxx',

@@ -1,38 +1,108 @@
 'use client'
 
-import { useState } from 'react'
-import { Video } from '@/src/types/video'
-import { Heart, Star, Trash2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Heart, Trash2 } from 'lucide-react'
+import { getFavorites, unfavoriteVideo } from '@/src/api/favorite'
+import { type MyVideosPageData } from '@/src/api/video'
+import { resolveMediaUrl } from '@/src/utils/media'
 
-// Mock 收藏数据
-const mockFavorites: Video[] = [
-  { videoId: '2', title: '城市夜景', url: '', coverUrl: '', authorId: 'u2', authorName: '小红', likeCount: 5678, favoriteCount: 200, liked: true, favorited: true, createdAt: '2026-05-19T15:00:00' },
-  { videoId: '4', title: '旅行日记', url: '', coverUrl: '', authorId: 'u1', authorName: '小明', likeCount: 8901, favoriteCount: 500, liked: false, favorited: true, createdAt: '2026-05-17T08:00:00' },
-]
-
-interface FavoriteListProps {
-  onUnfavorite?: (videoId: string) => void
+interface VideoRecord {
+  videoId: string
+  authorId: string
+  authorName?: string
+  title: string
+  description: string
+  videoUrl: string
+  coverUrl: string
+  likeCount: number
+  status: string
+  createdAt: string
+  updatedAt?: string
 }
 
-export function FavoriteList({ onUnfavorite }: FavoriteListProps) {
-  const [favorites, setFavorites] = useState<Video[]>(mockFavorites)
+export function FavoriteList() {
+  const [videos, setVideos] = useState<VideoRecord[]>([])
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const pageSize = 10
 
-  const handleUnfavorite = (videoId: string) => {
-    setFavorites((prev) => prev.filter((v) => v.videoId !== videoId))
-    onUnfavorite?.(videoId)
+  useEffect(() => {
+    let cancelled = false
+
+    async function fetchFavorites() {
+      setLoading(true)
+      setError('')
+      try {
+        const data: MyVideosPageData = await getFavorites(page, pageSize)
+        if (cancelled) return
+        const normalizedRecords = data.records.map((record) => ({
+          ...record,
+          videoUrl: resolveMediaUrl(record.videoUrl),
+          coverUrl: resolveMediaUrl(record.coverUrl),
+        }))
+        setVideos(normalizedRecords)
+        setTotal(data.total)
+      } catch (err) {
+        if (cancelled) return
+        setError(err instanceof Error ? err.message : '加载失败')
+      } finally {
+        if (!cancelled) {
+          setLoading(false)
+        }
+      }
+    }
+
+    void fetchFavorites()
+    return () => {
+      cancelled = true
+    }
+  }, [page])
+
+  const handleUnfavorite = async (videoId: string) => {
+    if (!window.confirm('确定要取消收藏这个视频吗？')) {
+      return
+    }
+
+    try {
+      await unfavoriteVideo(videoId)
+      setVideos((prev) => prev.filter((video) => video.videoId !== videoId))
+      setTotal((prev) => Math.max(0, prev - 1))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '取消收藏失败')
+    }
   }
 
-  if (favorites.length === 0) {
+  if (loading) {
     return (
-      <div className="text-center py-8 text-gray-500">
-        暂无收藏
+      <div className="p-8 text-center border border-black">
+        <p className="text-gray-500">加载中...</p>
       </div>
     )
   }
 
+  if (error) {
+    return (
+      <div className="p-8 text-center border border-black">
+        <p className="text-red-600">{error}</p>
+      </div>
+    )
+  }
+
+  if (videos.length === 0) {
+    return (
+      <div className="p-8 text-center border border-black">
+        <p className="text-gray-500">暂无收藏</p>
+      </div>
+    )
+  }
+
+  const totalPages = Math.max(1, Math.ceil(total / pageSize))
+
   return (
     <div className="space-y-4">
-      {favorites.map((video) => (
+      {videos.map((video) => (
         <div key={video.videoId} className="border border-black p-4 flex justify-between items-center">
           <div className="flex-1">
             <h3 className="font-bold">{video.title}</h3>
@@ -40,9 +110,6 @@ export function FavoriteList({ onUnfavorite }: FavoriteListProps) {
             <div className="flex gap-4 mt-2 text-xs text-gray-500">
               <span className="flex items-center gap-1">
                 <Heart className="w-3 h-3" /> {video.likeCount}
-              </span>
-              <span className="flex items-center gap-1">
-                <Star className="w-3 h-3" /> {video.favoriteCount}
               </span>
             </div>
           </div>
@@ -55,6 +122,24 @@ export function FavoriteList({ onUnfavorite }: FavoriteListProps) {
           </button>
         </div>
       ))}
+
+      <div className="flex justify-center gap-2 pt-4">
+        <button
+          onClick={() => setPage((current) => Math.max(1, current - 1))}
+          disabled={page === 1}
+          className="px-4 py-2 border border-black disabled:opacity-30"
+        >
+          上一页
+        </button>
+        <span className="px-4 py-2">第 {page} 页 / 共 {totalPages} 页</span>
+        <button
+          onClick={() => setPage((current) => current + 1)}
+          disabled={page >= totalPages}
+          className="px-4 py-2 border border-black disabled:opacity-30"
+        >
+          下一页
+        </button>
+      </div>
     </div>
   )
 }

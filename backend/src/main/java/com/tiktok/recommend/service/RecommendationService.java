@@ -2,6 +2,7 @@ package com.tiktok.recommend.service;
 
 import com.tiktok.common.enums.ErrorCode;
 import com.tiktok.common.exception.BizException;
+import com.tiktok.favorite.mapper.FavoriteMapper;
 import com.tiktok.like.mapper.LikeMapper;
 import com.tiktok.recommend.dto.RecommendFeedResponse;
 import com.tiktok.recommend.dto.RecommendVideoItemResponse;
@@ -20,10 +21,12 @@ public class RecommendationService {
 
     private final VideoMapper videoMapper;
     private final LikeMapper likeMapper;
+    private final FavoriteMapper favoriteMapper;
 
-    public RecommendationService(VideoMapper videoMapper, LikeMapper likeMapper) {
+    public RecommendationService(VideoMapper videoMapper, LikeMapper likeMapper, FavoriteMapper favoriteMapper) {
         this.videoMapper = videoMapper;
         this.likeMapper = likeMapper;
+        this.favoriteMapper = favoriteMapper;
     }
 
     public RecommendFeedResponse getRecommendFeed(String userId, int count, int offset) {
@@ -52,18 +55,21 @@ public class RecommendationService {
 
     private RecommendVideoItemResponse toItem(String userId, Video video) {
         boolean liked = likeMapper.existsLike(userId, video.getId()) > 0;
-        return new RecommendVideoItemResponse(
-                video.getId(),
-                video.getAuthorId(),
-                video.getAuthorName(),
-                video.getTitle(),
-                video.getDescription(),
-                video.getVideoUrl(),
-                video.getCoverUrl(),
-                video.getLikeCount(),
-                liked,
-                video.getCreatedAt()
-        );
+        boolean favorited = favoriteMapper.existsFavorite(userId, video.getId()) > 0;
+        RecommendVideoItemResponse item = new RecommendVideoItemResponse();
+        item.setVideoId(video.getId());
+        item.setAuthorId(video.getAuthorId());
+        item.setAuthorName(video.getAuthorName());
+        item.setTitle(video.getTitle());
+        item.setDescription(video.getDescription());
+        item.setVideoUrl(video.getVideoUrl());
+        item.setCoverUrl(video.getCoverUrl());
+        item.setLikeCount(video.getLikeCount());
+        item.setFavoriteCount(video.getFavoriteCount());
+        item.setLiked(liked);
+        item.setFavorited(favorited);
+        item.setCreatedAt(video.getCreatedAt());
+        return item;
     }
 
     private int normalizeCount(int count) {

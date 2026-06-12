@@ -6,6 +6,7 @@ public final class ResourceIdUtil {
     private static final String VIDEO_PREFIX = "vid_";
     private static final String VIEW_PREFIX = "view_";
     private static final String LIKE_PREFIX = "like_";
+    private static final String FAVORITE_PREFIX = "fav_";
     private static final String LOG_PREFIX = "log_";
     private static final String TOKEN_BLACKLIST_PREFIX = "tbl_";
     private static final String REQUEST_PREFIX = "req_";
@@ -27,6 +28,10 @@ public final class ResourceIdUtil {
 
     public static String nextLikeId() {
         return nextId(LIKE_PREFIX);
+    }
+
+    public static String nextFavoriteId() {
+        return nextId(FAVORITE_PREFIX);
     }
 
     public static String nextLogId() {

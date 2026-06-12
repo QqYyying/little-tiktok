@@ -7,11 +7,12 @@ import { Video } from '@/src/types/video'
 interface VideoCardProps {
   video: Video
   onLike: (videoId: string) => void | Promise<void>
-  onFavorite: (videoId: string) => void
+  onFavorite: (videoId: string) => void | Promise<void>
   likePending?: boolean
+  favoritePending?: boolean
 }
 
-export function VideoCard({ video, onLike, onFavorite, likePending = false }: VideoCardProps) {
+export function VideoCard({ video, onLike, onFavorite, likePending = false, favoritePending = false }: VideoCardProps) {
   const videoUrl = video.videoUrl || video.url || ''
   const videoRef = useRef<HTMLVideoElement | null>(null)
 
@@ -81,8 +82,9 @@ export function VideoCard({ video, onLike, onFavorite, likePending = false }: Vi
             <button
               type="button"
               aria-label={video.favorited ? '取消收藏' : '收藏'}
-              onClick={() => onFavorite(video.videoId)}
-              className="flex flex-col items-center p-2 border border-white/50 bg-black/50 hover:bg-white/15"
+              disabled={favoritePending}
+              onClick={() => void onFavorite(video.videoId)}
+              className="flex flex-col items-center p-2 border border-white/50 bg-black/50 hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Star className={`w-6 h-6 ${video.favorited ? 'fill-white' : ''}`} />
               <span className="text-xs mt-1">{video.favoriteCount ?? 0}</span>

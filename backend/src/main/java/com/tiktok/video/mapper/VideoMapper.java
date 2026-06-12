@@ -41,6 +41,12 @@ public interface VideoMapper {
 
     int getLikeCount(@Param("videoId") String videoId);
 
+    int incrementFavoriteCount(@Param("videoId") String videoId);
+
+    int decrementFavoriteCount(@Param("videoId") String videoId);
+
+    int getFavoriteCount(@Param("videoId") String videoId);
+
     int logicalDelete(@Param("id") String id,
                       @Param("deletedStatus") String deletedStatus,
                       @Param("updatedAt") LocalDateTime updatedAt,

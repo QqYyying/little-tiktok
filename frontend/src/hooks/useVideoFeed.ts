@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Video } from '@/src/types/video'
 import { getRecommendFeed } from '@/src/services/recommend'
 import { likeVideo, unlikeVideo } from '@/src/services/like'
+import { favoriteVideo, unfavoriteVideo } from '@/src/services/favorite'
 import { reportVideoView } from '@/src/services/video'
 
 const DEFAULT_FEED_COUNT = 5
@@ -16,11 +17,13 @@ export function useVideoFeed() {
   const [error, setError] = useState('')
   const [hasMore, setHasMore] = useState(false)
   const [pendingLikeVideoIds, setPendingLikeVideoIds] = useState<Set<string>>(() => new Set())
+  const [pendingFavoriteVideoIds, setPendingFavoriteVideoIds] = useState<Set<string>>(() => new Set())
   const reportedVideoIdsRef = useRef<Set<string>>(new Set())
   const reportingVideoIdsRef = useRef<Set<string>>(new Set())
   const loadingFeedRef = useRef(false)
   const loadingFeedPromiseRef = useRef<Promise<number> | null>(null)
   const pendingLikeVideoIdsRef = useRef<Set<string>>(new Set())
+  const pendingFavoriteVideoIdsRef = useRef<Set<string>>(new Set())
   const videosRef = useRef<Video[]>([])
   const currentIndexRef = useRef(0)
   const hasMoreRef = useRef(false)
@@ -199,31 +202,54 @@ export function useVideoFeed() {
     }
   }, [])
 
-  const toggleFavorite = useCallback((videoId: string) => {
-    setVideos((prev) => {
-      const nextVideos = prev.map((video) =>
-        video.videoId === videoId
-          ? {
-              ...video,
-              favorited: !video.favorited,
-              favoriteCount: Math.max(0, (video.favoriteCount ?? 0) + (video.favorited ? -1 : 1)),
-            }
-          : video
-      )
-      videosRef.current = nextVideos
-      return nextVideos
-    })
+  const toggleFavorite = useCallback(async (videoId: string) => {
+    if (pendingFavoriteVideoIdsRef.current.has(videoId)) {
+      return
+    }
+
+    const targetVideo = videosRef.current.find((video) => video.videoId === videoId)
+    if (!targetVideo) {
+      return
+    }
+
+    pendingFavoriteVideoIdsRef.current.add(videoId)
+    setPendingFavoriteVideoIds(new Set(pendingFavoriteVideoIdsRef.current))
+    setError('')
+
+    try {
+      const result = targetVideo.favorited
+        ? await unfavoriteVideo(videoId)
+        : await favoriteVideo(videoId)
+
+      setVideos((prev) => {
+        const nextVideos = prev.map((video) =>
+          video.videoId === videoId
+            ? { ...video, favorited: result.favorited, favoriteCount: result.favoriteCount }
+            : video
+        )
+        videosRef.current = nextVideos
+        return nextVideos
+      })
+    } catch (err) {
+      console.error('Failed to toggle favorite', err)
+      setError(err instanceof Error ? err.message : '收藏操作失败，请稍后重试')
+    } finally {
+      pendingFavoriteVideoIdsRef.current.delete(videoId)
+      setPendingFavoriteVideoIds(new Set(pendingFavoriteVideoIdsRef.current))
+    }
   }, [])
 
   const currentVideo = videos[currentIndex] || null
   const nextVideoToPreload = videos[currentIndex + 1] || null
   const currentVideoLikePending = currentVideo ? pendingLikeVideoIds.has(currentVideo.videoId) : false
+  const currentVideoFavoritePending = currentVideo ? pendingFavoriteVideoIds.has(currentVideo.videoId) : false
 
   return {
     videos,
     currentVideo,
     nextVideoToPreload,
     currentVideoLikePending,
+    currentVideoFavoritePending,
     currentIndex,
     loading,
     error,
