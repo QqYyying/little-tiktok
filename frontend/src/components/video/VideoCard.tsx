@@ -10,9 +10,11 @@ interface VideoCardProps {
   onFavorite: (videoId: string) => void | Promise<void>
   likePending?: boolean
   favoritePending?: boolean
+  muted?: boolean
+  onMuteChange?: (muted: boolean) => void
 }
 
-export function VideoCard({ video, onLike, onFavorite, likePending = false, favoritePending = false }: VideoCardProps) {
+export function VideoCard({ video, onLike, onFavorite, likePending = false, favoritePending = false, muted = true, onMuteChange }: VideoCardProps) {
   const videoUrl = video.videoUrl || video.url || ''
   const videoRef = useRef<HTMLVideoElement | null>(null)
 
@@ -23,6 +25,7 @@ export function VideoCard({ video, onLike, onFavorite, likePending = false, favo
     }
 
     videoElement.currentTime = 0
+    videoElement.muted = muted
     const playPromise = videoElement.play()
     if (playPromise !== undefined) {
       playPromise.catch((error) => {
@@ -30,10 +33,19 @@ export function VideoCard({ video, onLike, onFavorite, likePending = false, favo
       })
     }
 
+    const handleVolumeChange = () => {
+      if (onMuteChange) {
+        onMuteChange(videoElement.muted)
+      }
+    }
+
+    videoElement.addEventListener('volumechange', handleVolumeChange)
+
     return () => {
+      videoElement.removeEventListener('volumechange', handleVolumeChange)
       videoElement.pause()
     }
-  }, [video.videoId, videoUrl])
+  }, [video.videoId, videoUrl, muted, onMuteChange])
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-center bg-black text-white">
@@ -47,7 +59,6 @@ export function VideoCard({ video, onLike, onFavorite, likePending = false, favo
             controls
             autoPlay
             loop
-            muted
             playsInline
             className="h-full w-full object-contain bg-black"
           />

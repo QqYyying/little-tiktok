@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { useVideoFeed } from '@/src/hooks/useVideoFeed'
 import { VideoCard } from './VideoCard'
@@ -9,6 +9,7 @@ const WHEEL_NAVIGATION_LOCK_MS = 400
 const TOUCH_SWIPE_THRESHOLD = 50
 
 export function VideoFeed() {
+  const [muted, setMuted] = useState(true)
   const {
     currentVideo,
     nextVideoToPreload,
@@ -163,6 +164,8 @@ export function VideoFeed() {
           onFavorite={toggleFavorite}
           likePending={currentVideoLikePending}
           favoritePending={currentVideoFavoritePending}
+          muted={muted}
+          onMuteChange={setMuted}
         />
       </div>
 
