@@ -26,7 +26,7 @@ export default function MyVideosPage() {
               <span className="text-white text-xl font-bold">用户</span>
             </div>
             <div className="flex-1">
-              <h2 className="text-lg font-semibold text-gray-900">我的账号</h2>
+              <h2 className="text-lg font-semibold text-gray-900">用户名</h2>
               <p className="text-sm text-gray-500">欢迎回来！</p>
             </div>
           </div>
