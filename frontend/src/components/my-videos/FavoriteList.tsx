@@ -116,7 +116,7 @@ export function FavoriteList() {
       {videos.map((video) => (
         <div key={video.videoId} className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
           <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-blue-100 to-cyan-100 flex-shrink-0 flex items-center justify-center">
-            <Heart className="w-6 h-6 text-blue-500" />
+            <Star className="w-6 h-6 text-blue-500" />
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-gray-900 truncate">{video.title}</h3>
