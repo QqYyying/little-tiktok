@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Heart, Trash2 } from 'lucide-react'
+import { Heart, Star, Trash2 } from 'lucide-react'
 import { getFavorites, unfavoriteVideo } from '@/src/api/favorite'
 import { type MyVideosPageData } from '@/src/api/video'
 import { resolveMediaUrl } from '@/src/utils/media'
@@ -101,7 +101,7 @@ export function FavoriteList() {
     return (
       <div className="p-12 text-center">
         <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-          <Heart className="w-8 h-8 text-gray-400" />
+          <Star className="w-8 h-8 text-gray-400" />
         </div>
         <p className="text-gray-500">暂无收藏</p>
         <p className="text-sm text-gray-400 mt-2">快去收藏喜欢的视频吧！</p>
