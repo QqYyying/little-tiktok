@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Trash2, Heart, Star, Calendar, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Trash2, Heart, Star, Calendar, ChevronLeft, ChevronRight, Video } from 'lucide-react'
 import { deleteVideo, getMyVideos, type VideoRecord } from '@/src/api/video'
 
 export function MyVideoList() {
@@ -84,7 +84,7 @@ export function MyVideoList() {
     return (
       <div className="p-12 text-center">
         <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-          <VideoIcon className="w-8 h-8 text-gray-400" />
+          <Video className="w-8 h-8 text-gray-400" />
         </div>
         <p className="text-gray-500">暂无视频</p>
         <p className="text-sm text-gray-400 mt-2">快去发布你的第一个视频吧！</p>
@@ -191,16 +191,6 @@ export function MyVideoList() {
 }
 
 // 辅助图标组件
-function VideoIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="m15 10 4.553-2.276A1 1 0 0 0 20 8.618v6.764a1 1 0 0 0-1.447.894L15 14v-4Z" />
-      <path d="m2 8 5.586-3.057A1 1 0 0 1 9 6.34V17.66a1 1 0 0 1-1.414.893L2 16v-8Z" />
-      <path d="M2 12h20" />
-    </svg>
-  )
-}
-
 function PlayCircleMini(props: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
