@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Heart } from 'lucide-react'
+import { Heart, Calendar, X } from 'lucide-react'
 import { getLikedVideos, type VideoRecord } from '@/src/api/video'
 
 export function LikedVideoList() {
@@ -10,7 +10,19 @@ export function LikedVideoList() {
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [selectedVideo, setSelectedVideo] = useState<VideoRecord | null>(null)
   const pageSize = 10
+
+  useEffect(() => {
+    if (!selectedVideo) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSelectedVideo(null)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [selectedVideo])
 
   useEffect(() => {
     let cancelled = false
@@ -81,7 +93,8 @@ export function LikedVideoList() {
       {videos.map((video) => (
         <div
           key={video.videoId}
-          className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl"
+          onClick={() => setSelectedVideo(video)}
+          className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl cursor-pointer hover:bg-gray-100 transition-colors"
         >
           <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-blue-100 to-cyan-100 flex-shrink-0 flex items-center justify-center">
             <Heart className="w-6 h-6 text-blue-500" />
@@ -116,6 +129,56 @@ export function LikedVideoList() {
           下一页
         </button>
       </div>
+
+      {/* 视频播放弹窗 */}
+      {selectedVideo && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          onClick={() => setSelectedVideo(null)}
+        >
+          <div
+            className="relative w-full max-w-3xl mx-4 bg-black rounded-2xl overflow-hidden shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 关闭按钮 */}
+            <button
+              onClick={() => setSelectedVideo(null)}
+              className="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/50 text-white hover:bg-white/20 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* 视频播放器 */}
+            <div className="aspect-video bg-black flex items-center justify-center">
+              <video
+                src={selectedVideo.videoUrl}
+                controls
+                autoPlay
+                className="w-full h-full object-contain"
+                poster={selectedVideo.coverUrl}
+              />
+            </div>
+
+            {/* 视频信息 */}
+            <div className="p-4 bg-black/90">
+              <h3 className="text-white font-semibold text-lg">{selectedVideo.title}</h3>
+              {selectedVideo.description && (
+                <p className="text-white/70 text-sm mt-1">{selectedVideo.description}</p>
+              )}
+              <div className="flex items-center gap-4 mt-3 text-sm text-white/60">
+                <span className="flex items-center gap-1">
+                  <Heart className="w-4 h-4" />
+                  {selectedVideo.likeCount}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Calendar className="w-4 h-4" />
+                  {new Date(selectedVideo.createdAt).toLocaleDateString()}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
