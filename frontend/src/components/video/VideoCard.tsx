@@ -1,8 +1,9 @@
 'use client'
 
 import { memo, useEffect, useRef, useState } from 'react'
-import { Heart, Star } from 'lucide-react'
+import { Heart, Star, MessageCircle } from 'lucide-react'
 import { Video } from '@/src/types/video'
+import { CommentSection } from './CommentSection'
 
 interface VideoCardProps {
   video: Video
@@ -19,6 +20,7 @@ function VideoCardInner({ video, onLike, onFavorite, likePending = false, favori
   const videoUrl = video.videoUrl || video.url || ''
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const [coverLoaded, setCoverLoaded] = useState(false)
+  const [showComments, setShowComments] = useState(false)
 
   // 视频可见性控制：仅当前视频播放
   useEffect(() => {
@@ -112,38 +114,55 @@ function VideoCardInner({ video, onLike, onFavorite, likePending = false, favori
         )}
       </div>
 
-      <div className="w-full p-4 bg-black/85">
-        <div className="flex justify-between items-start gap-4">
-          <div className="min-w-0">
-            <h3 className="font-bold text-lg">{video.title}</h3>
-            <p className="text-sm text-white/70">@{video.authorName}</p>
-            {video.description && (
-              <p className="mt-2 text-sm text-white/60 line-clamp-2">{video.description}</p>
-            )}
-          </div>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              aria-label={video.liked ? '取消点赞' : '点赞'}
-              disabled={likePending}
-              onClick={() => void onLike(video.videoId)}
-              className="flex flex-col items-center p-2 border border-white/50 bg-black/50 hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Heart className={`w-6 h-6 ${video.liked ? 'fill-white' : ''}`} />
-              <span className="text-xs mt-1">{video.likeCount}</span>
-            </button>
-            <button
-              type="button"
-              aria-label={video.favorited ? '取消收藏' : '收藏'}
-              disabled={favoritePending}
-              onClick={() => void onFavorite(video.videoId)}
-              className="flex flex-col items-center p-2 border border-white/50 bg-black/50 hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Star className={`w-6 h-6 ${video.favorited ? 'fill-white' : ''}`} />
-              <span className="text-xs mt-1">{video.favoriteCount ?? 0}</span>
-            </button>
+      {/* 视频信息和操作区 */}
+      <div className="w-full bg-black/85">
+        <div className="p-4">
+          <div className="flex justify-between items-start gap-4">
+            <div className="min-w-0">
+              <h3 className="font-bold text-lg">{video.title}</h3>
+              <p className="text-sm text-white/70">@{video.authorName}</p>
+              {video.description && (
+                <p className="mt-2 text-sm text-white/60 line-clamp-2">{video.description}</p>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                aria-label={video.liked ? '取消点赞' : '点赞'}
+                disabled={likePending}
+                onClick={() => void onLike(video.videoId)}
+                className="flex flex-col items-center p-2 border border-white/50 bg-black/50 hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Heart className={`w-6 h-6 ${video.liked ? 'fill-white' : ''}`} />
+                <span className="text-xs mt-1">{video.likeCount}</span>
+              </button>
+              <button
+                type="button"
+                aria-label={video.favorited ? '取消收藏' : '收藏'}
+                disabled={favoritePending}
+                onClick={() => void onFavorite(video.videoId)}
+                className="flex flex-col items-center p-2 border border-white/50 bg-black/50 hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Star className={`w-6 h-6 ${video.favorited ? 'fill-white' : ''}`} />
+                <span className="text-xs mt-1">{video.favoriteCount ?? 0}</span>
+              </button>
+              <button
+                type="button"
+                aria-label={showComments ? '收起评论' : '查看评论'}
+                onClick={() => setShowComments(!showComments)}
+                className="flex flex-col items-center p-2 border border-white/50 bg-black/50 hover:bg-white/15"
+              >
+                <MessageCircle className={`w-6 h-6 ${showComments ? 'fill-white' : ''}`} />
+                <span className="text-xs mt-1">{video.commentCount ?? 0}</span>
+              </button>
+            </div>
           </div>
         </div>
+
+        {/* 评论区 */}
+        {showComments && (
+          <CommentSection videoId={video.videoId} commentCount={video.commentCount} />
+        )}
       </div>
     </div>
   )
@@ -158,6 +177,7 @@ export const VideoCard = memo(VideoCardInner, (prevProps, nextProps) => {
     prevProps.video.favorited === nextProps.video.favorited &&
     prevProps.video.likeCount === nextProps.video.likeCount &&
     prevProps.video.favoriteCount === nextProps.video.favoriteCount &&
+    prevProps.video.commentCount === nextProps.video.commentCount &&
     prevProps.likePending === nextProps.likePending &&
     prevProps.favoritePending === nextProps.favoritePending &&
     prevProps.muted === nextProps.muted &&

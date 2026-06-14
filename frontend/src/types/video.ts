@@ -10,6 +10,7 @@ export interface Video {
   authorName: string
   likeCount: number
   favoriteCount?: number
+  commentCount?: number
   liked?: boolean
   favorited?: boolean
   createdAt: string

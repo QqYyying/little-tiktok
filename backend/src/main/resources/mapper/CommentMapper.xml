@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.tiktok.comment.mapper.CommentMapper">
+
+    <resultMap id="CommentResult" type="com.tiktok.comment.entity.Comment">
+        <id column="id" property="id"/>
+        <result column="video_id" property="videoId"/>
+        <result column="user_id" property="userId"/>
+        <result column="content" property="content"/>
+        <result column="like_count" property="likeCount"/>
+        <result column="reply_to_id" property="replyToId"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.tiktok.comment.entity.Comment">
+        INSERT INTO video_comment (
+            id, video_id, user_id, content, like_count, reply_to_id, created_at, updated_at
+        ) VALUES (
+            #{id}, #{videoId}, #{userId}, #{content}, #{likeCount}, #{replyToId}, #{createdAt}, #{updatedAt}
+        )
+    </insert>
+
+    <delete id="deleteById">
+        DELETE FROM video_comment WHERE id = #{id}
+    </delete>
+
+    <update id="updateLikeCount">
+        UPDATE video_comment SET like_count = like_count + #{delta}, updated_at = NOW() WHERE id = #{id}
+    </update>
+
+    <select id="selectById" resultMap="CommentResult">
+        SELECT * FROM video_comment WHERE id = #{id}
+    </select>
+
+    <select id="selectByVideoId" resultMap="CommentResult">
+        SELECT * FROM video_comment 
+        WHERE video_id = #{videoId} 
+        ORDER BY created_at DESC 
+        LIMIT #{offset}, #{limit}
+    </select>
+
+    <select id="countByVideoId" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM video_comment WHERE video_id = #{videoId}
+    </select>
+
+</mapper>
