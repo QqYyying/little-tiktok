@@ -22,7 +22,7 @@ export default function MyVideosPage() {
       <div className="bg-white shadow-sm border-b border-gray-100">
         <div className="max-w-md mx-auto px-4 py-6">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 flex items-center justify-center">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center">
               <span className="text-white text-xl font-bold">用户</span>
             </div>
             <div className="flex-1">
@@ -43,7 +43,7 @@ export default function MyVideosPage() {
               onClick={() => setActiveTab(key)}
               className={`flex-1 flex flex-col items-center gap-1 py-3 px-2 rounded-xl transition-all duration-200 ${
                 activeTab === key
-                  ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-md'
+                  ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md'
                   : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
               }`}
             >

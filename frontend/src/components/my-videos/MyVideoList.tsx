@@ -60,7 +60,7 @@ export function MyVideoList() {
   if (loading) {
     return (
       <div className="p-12 text-center">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-pink-500 border-t-transparent" />
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-500 border-t-transparent" />
         <p className="mt-4 text-gray-500">加载中...</p>
       </div>
     )
@@ -72,7 +72,7 @@ export function MyVideoList() {
         <p className="text-red-500 mb-4">{error}</p>
         <button
           onClick={() => setPage(1)}
-          className="px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors"
+          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
         >
           重试
         </button>
@@ -104,8 +104,8 @@ export function MyVideoList() {
             className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
           >
             {/* 视频缩略图 */}
-            <div className="w-20 h-20 rounded-lg bg-gradient-to-br from-pink-100 to-purple-100 flex-shrink-0 flex items-center justify-center">
-              <PlayCircleMini className="w-8 h-8 text-pink-500" />
+            <div className="w-20 h-20 rounded-lg bg-gradient-to-br from-blue-100 to-cyan-100 flex-shrink-0 flex items-center justify-center">
+              <PlayCircleMini className="w-8 h-8 text-blue-500" />
             </div>
 
             {/* 视频信息 */}
@@ -164,7 +164,7 @@ export function MyVideoList() {
                   onClick={() => setPage(pageNum)}
                   className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
                     page === pageNum
-                      ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white'
+                      ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white'
                       : 'text-gray-600 hover:bg-gray-100'
                   }`}
                 >

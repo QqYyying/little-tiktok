@@ -52,7 +52,7 @@ export function UploadVideo({ onSuccess }: { onSuccess?: () => void }) {
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all bg-gray-50"
+          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-gray-50"
           placeholder="请输入视频标题"
         />
       </div>
@@ -63,7 +63,7 @@ export function UploadVideo({ onSuccess }: { onSuccess?: () => void }) {
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all bg-gray-50 resize-none"
+          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-gray-50 resize-none"
           placeholder="补充一点视频说明（可选）"
           rows={3}
         />
@@ -84,7 +84,7 @@ export function UploadVideo({ onSuccess }: { onSuccess?: () => void }) {
           className={`relative w-full p-6 border-2 border-dashed rounded-xl transition-all cursor-pointer ${
             file
               ? 'border-green-400 bg-green-50'
-              : 'border-gray-200 hover:border-pink-400 hover:bg-pink-50'
+              : 'border-gray-200 hover:border-blue-400 hover:bg-blue-50'
           }`}
         >
           {file ? (
@@ -113,7 +113,7 @@ export function UploadVideo({ onSuccess }: { onSuccess?: () => void }) {
             </div>
           ) : (
             <div className="flex flex-col items-center gap-3">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 flex items-center justify-center">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center">
                 <Upload className="w-8 h-8 text-white" />
               </div>
               <p className="text-sm font-medium text-gray-700">点击选择视频文件</p>
@@ -188,7 +188,7 @@ export function UploadVideo({ onSuccess }: { onSuccess?: () => void }) {
       <button
         type="submit"
         disabled={loading}
-        className="w-full py-3 px-4 bg-gradient-to-r from-pink-500 to-purple-500 text-white font-medium rounded-xl hover:from-pink-600 hover:to-purple-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+        className="w-full py-3 px-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-medium rounded-xl hover:from-blue-600 hover:to-cyan-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
       >
         {loading ? (
           <span className="flex items-center justify-center gap-2">
