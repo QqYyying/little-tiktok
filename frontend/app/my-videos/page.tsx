@@ -36,14 +36,14 @@ export default function MyVideosPage() {
       {/* 内容区域 */}
       <div className="max-w-md mx-auto px-4 py-4">
         {/* 标签页 */}
-        <div className="flex bg-white rounded-2xl p-1 shadow-sm mb-4">
+        <div className="flex bg-white rounded-2xl p-1 shadow-sm mb-4 overflow-hidden">
           {tabs.map(({ key, label, icon: Icon }) => (
             <button
               key={key}
               onClick={() => setActiveTab(key)}
               className={`flex-1 flex flex-col items-center gap-1 py-3 px-2 rounded-xl transition-all duration-200 ${
                 activeTab === key
-                  ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md'
+                  ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white'
                   : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
               }`}
             >
