@@ -18,6 +18,7 @@ export interface VideoRecord {
   videoUrl: string
   coverUrl: string
   likeCount: number
+  favoriteCount?: number
   status: string
   createdAt: string
   updatedAt?: string
