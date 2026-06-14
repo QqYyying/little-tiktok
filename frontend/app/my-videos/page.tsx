@@ -36,27 +36,21 @@ export default function MyVideosPage() {
       {/* 内容区域 */}
       <div className="max-w-md mx-auto px-4 py-4">
         {/* 标签页 */}
-        <div className="flex bg-white rounded-2xl p-1 shadow-sm mb-4">
-          {tabs.map(({ key, label, icon: Icon }, index) => {
-            const isFirst = index === 0
-            const isLast = index === tabs.length - 1
-            const isActive = activeTab === key
-            
-            return (
-              <button
-                key={key}
-                onClick={() => setActiveTab(key)}
-                className={`flex-1 flex flex-col items-center gap-1 py-3 px-2 transition-all duration-200 ${
-                  isActive ? 'rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white' : ''
-                } ${!isActive && isFirst ? 'rounded-l-xl' : ''} ${!isActive && isLast ? 'rounded-r-xl' : ''} ${
-                  !isActive ? 'text-gray-500 hover:text-gray-700 hover:bg-gray-50' : ''
-                }`}
-              >
-                <Icon className="w-5 h-5" />
-                <span className="text-xs font-medium">{label}</span>
-              </button>
-            )
-          })}
+        <div className="flex bg-gray-100 rounded-2xl p-1 shadow-sm mb-4">
+          {tabs.map(({ key, label, icon: Icon }) => (
+            <button
+              key={key}
+              onClick={() => setActiveTab(key)}
+              className={`flex-1 flex flex-col items-center gap-1 py-3 px-2 rounded-xl transition-all duration-200 ${
+                activeTab === key
+                  ? 'bg-white text-blue-600 shadow-md font-medium'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <Icon className="w-5 h-5" />
+              <span className="text-xs">{label}</span>
+            </button>
+          ))}
         </div>
 
         {/* 内容区域 */}
