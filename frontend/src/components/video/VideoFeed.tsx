@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { useVideoFeed } from '@/src/hooks/useVideoFeed'
 import { VideoCard } from './VideoCard'

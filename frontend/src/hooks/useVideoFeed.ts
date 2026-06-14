@@ -9,6 +9,7 @@ import { reportVideoView } from '@/src/services/video'
 
 const DEFAULT_FEED_COUNT = 5
 const LOAD_MORE_THRESHOLD = 2
+const PRELOAD_VIDEO_COUNT = 2  // 预加载视频数量
 
 export function useVideoFeed() {
   const [videos, setVideos] = useState<Video[]>([])
@@ -110,11 +111,29 @@ export function useVideoFeed() {
     }
   }, [])
 
+  const preloadVideos = useCallback((fromIndex: number) => {
+    // 预加载当前视频之后的多个视频
+    for (let i = 1; i <= PRELOAD_VIDEO_COUNT; i++) {
+      const preloadIndex = fromIndex + i
+      const video = videosRef.current[preloadIndex]
+      if (video && (video.videoUrl || video.url)) {
+        // 创建一个临时的 video 元素进行预加载
+        const preloadVideo = document.createElement('video')
+        preloadVideo.src = video.videoUrl || video.url || ''
+        preloadVideo.preload = 'auto'
+        preloadVideo.muted = true
+        preloadVideo.load()
+      }
+    }
+  }, [])
+
   const goToVideo = useCallback((nextIndex: number) => {
     currentIndexRef.current = nextIndex
     setCurrentIndex(nextIndex)
     void reportViewedVideo(videosRef.current[nextIndex])
-  }, [reportViewedVideo])
+    // 触发预加载
+    preloadVideos(nextIndex)
+  }, [reportViewedVideo, preloadVideos])
 
   const nextVideo = useCallback(async () => {
     const currentVideoIndex = currentIndexRef.current

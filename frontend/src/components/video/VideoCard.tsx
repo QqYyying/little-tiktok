@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
 import { Heart, Star } from 'lucide-react'
 import { Video } from '@/src/types/video'
 
@@ -12,12 +12,30 @@ interface VideoCardProps {
   favoritePending?: boolean
   muted?: boolean
   onMuteChange?: (muted: boolean) => void
+  isVisible?: boolean
 }
 
-export function VideoCard({ video, onLike, onFavorite, likePending = false, favoritePending = false, muted = true, onMuteChange }: VideoCardProps) {
+function VideoCardInner({ video, onLike, onFavorite, likePending = false, favoritePending = false, muted = true, onMuteChange, isVisible = true }: VideoCardProps) {
   const videoUrl = video.videoUrl || video.url || ''
   const videoRef = useRef<HTMLVideoElement | null>(null)
+  const [coverLoaded, setCoverLoaded] = useState(false)
 
+  // 视频可见性控制：仅当前视频播放
+  useEffect(() => {
+    const videoElement = videoRef.current
+    if (!videoElement) return
+
+    if (isVisible) {
+      videoElement.muted = muted
+      videoElement.play().catch((error) => {
+        console.warn('Failed to autoplay video', { videoId: video.videoId, error })
+      })
+    } else {
+      videoElement.pause()
+    }
+  }, [isVisible, video.videoId, muted])
+
+  // 视频加载和事件监听
   useEffect(() => {
     const videoElement = videoRef.current
     if (!videoElement || !videoUrl) {
@@ -25,12 +43,14 @@ export function VideoCard({ video, onLike, onFavorite, likePending = false, favo
     }
 
     videoElement.currentTime = 0
-    videoElement.muted = muted
-    const playPromise = videoElement.play()
-    if (playPromise !== undefined) {
-      playPromise.catch((error) => {
-        console.warn('Failed to autoplay video', { videoId: video.videoId, error })
-      })
+    if (isVisible) {
+      videoElement.muted = muted
+      const playPromise = videoElement.play()
+      if (playPromise !== undefined) {
+        playPromise.catch((error) => {
+          console.warn('Failed to autoplay video', { videoId: video.videoId, error })
+        })
+      }
     }
 
     const handleVolumeChange = () => {
@@ -45,23 +65,45 @@ export function VideoCard({ video, onLike, onFavorite, likePending = false, favo
       videoElement.removeEventListener('volumechange', handleVolumeChange)
       videoElement.pause()
     }
-  }, [video.videoId, videoUrl, muted, onMuteChange])
+  }, [video.videoId, videoUrl, isVisible, muted, onMuteChange])
+
+  // 封面图懒加载
+  const handleCoverLoad = () => {
+    setCoverLoaded(true)
+  }
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-center bg-black text-white">
       <div className="min-h-0 flex-1 w-full flex items-center justify-center bg-black">
         {videoUrl ? (
-          <video
-            ref={videoRef}
-            key={video.videoId}
-            src={videoUrl}
-            poster={video.coverUrl}
-            controls
-            autoPlay
-            loop
-            playsInline
-            className="h-full w-full object-contain bg-black"
-          />
+          <div className="relative w-full h-full">
+            {/* 封面图（懒加载） */}
+            {video.coverUrl && !coverLoaded && (
+              <div
+                className="absolute inset-0 flex items-center justify-center bg-black/50"
+              >
+                <img
+                  src={video.coverUrl}
+                  alt=""
+                  className="max-h-full max-w-full object-contain opacity-0"
+                  onLoad={handleCoverLoad}
+                  loading="lazy"
+                />
+              </div>
+            )}
+            <video
+              ref={videoRef}
+              key={video.videoId}
+              src={videoUrl}
+              poster={coverLoaded ? undefined : video.coverUrl}
+              controls
+              autoPlay
+              loop
+              playsInline
+              preload={isVisible ? 'auto' : 'none'}
+              className="h-full w-full object-contain bg-black"
+            />
+          </div>
         ) : (
           <div className="text-center">
             <div className="text-6xl mb-4">▶</div>
@@ -106,3 +148,19 @@ export function VideoCard({ video, onLike, onFavorite, likePending = false, favo
     </div>
   )
 }
+
+// 使用 React.memo 避免不必要的重渲染
+export const VideoCard = memo(VideoCardInner, (prevProps, nextProps) => {
+  // 自定义比较逻辑：只在新视频切换或交互状态变化时重渲染
+  return (
+    prevProps.video.videoId === nextProps.video.videoId &&
+    prevProps.video.liked === nextProps.video.liked &&
+    prevProps.video.favorited === nextProps.video.favorited &&
+    prevProps.video.likeCount === nextProps.video.likeCount &&
+    prevProps.video.favoriteCount === nextProps.video.favoriteCount &&
+    prevProps.likePending === nextProps.likePending &&
+    prevProps.favoritePending === nextProps.favoritePending &&
+    prevProps.muted === nextProps.muted &&
+    prevProps.isVisible === nextProps.isVisible
+  )
+})
