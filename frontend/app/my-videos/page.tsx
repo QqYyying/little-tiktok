@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Video, Heart, Star, History } from 'lucide-react'
 import { FavoriteList, LikedVideoList, MyVideoList, ViewHistoryList } from '@/src/components/my-videos'
+import { useAuth } from '@/src/hooks/useAuth'
 
 type Tab = 'videos' | 'liked' | 'favorites' | 'history'
 
@@ -15,6 +16,12 @@ const tabs: { key: Tab; label: string; icon: typeof Video }[] = [
 
 export default function MyVideosPage() {
   const [activeTab, setActiveTab] = useState<Tab>('videos')
+  const { user } = useAuth()
+
+  // 获取用户名首字母用于头像显示
+  const getInitial = (name: string) => {
+    return name ? name.charAt(0).toUpperCase() : '用'
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -23,10 +30,10 @@ export default function MyVideosPage() {
         <div className="max-w-md mx-auto px-4 py-6">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center">
-              <span className="text-white text-xl font-bold">用户</span>
+              <span className="text-white text-xl font-bold">{getInitial(user?.username || '用户')}</span>
             </div>
             <div className="flex-1">
-              <h2 className="text-lg font-semibold text-gray-900">用户名</h2>
+              <h2 className="text-lg font-semibold text-gray-900">{user?.username || '用户名'}</h2>
               <p className="text-sm text-gray-500">欢迎回来！</p>
             </div>
           </div>
