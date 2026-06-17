@@ -7,6 +7,7 @@ public class ApiMetricsResponse {
     private String startTime;
     private String endTime;
     private Integer totalApis;
+    private ApiMetricsSummaryResponse summary;
     private List<ApiMetricsRecordResponse> records;
 
     public String getStartTime() {
@@ -31,6 +32,14 @@ public class ApiMetricsResponse {
 
     public void setTotalApis(Integer totalApis) {
         this.totalApis = totalApis;
+    }
+
+    public ApiMetricsSummaryResponse getSummary() {
+        return summary;
+    }
+
+    public void setSummary(ApiMetricsSummaryResponse summary) {
+        this.summary = summary;
     }
 
     public List<ApiMetricsRecordResponse> getRecords() {

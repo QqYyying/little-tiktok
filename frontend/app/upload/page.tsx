@@ -3,9 +3,22 @@
 import { useRouter } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { UploadVideo } from '@/src/components/my-videos'
+import { useAuth } from '@/src/hooks/useAuth'
+import { useEffect } from 'react'
 
 export default function UploadPage() {
   const router = useRouter()
+  const { isAuthenticated, isLoading, requireAuth } = useAuth()
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      requireAuth('/upload')
+    }
+  }, [isAuthenticated, isLoading, requireAuth])
+
+  if (isLoading || !isAuthenticated) {
+    return null
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">

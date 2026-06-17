@@ -48,7 +48,7 @@ public class RecommendationController {
             @Max(value = 20, message = "count \u4e0d\u80fd\u8d85\u8fc7 20") Integer count,
             @RequestParam(value = "offset", required = false)
             @Min(value = 0, message = "offset \u5fc5\u987b\u5927\u4e8e\u7b49\u4e8e 0") Integer offset) {
-        String userId = UserContext.getCurrentUserId();
+        String userId = UserContext.isLogin() ? UserContext.getCurrentUserId() : null;
         RecommendRpcRequest request = new RecommendRpcRequest(userId, count, offset);
         return recommendationRpcClient.recommend(request);
     }

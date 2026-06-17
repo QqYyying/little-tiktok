@@ -1,13 +1,15 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { LoginForm, RegisterForm } from '@/src/components/auth'
 import { Video, UserPlus, LogIn } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [mode, setMode] = useState<'login' | 'register'>('login')
+  const redirect = searchParams.get('redirect')
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center p-4">
@@ -60,7 +62,9 @@ export default function LoginPage() {
         {/* 表单区域 */}
         <div className="px-6 pb-8">
           {mode === 'login' ? (
-            <LoginForm onSuccess={() => router.push('/')} />
+            <LoginForm onSuccess={() => {
+              router.push(redirect?.startsWith('/') ? redirect : '/')
+            }} />
           ) : (
             <RegisterForm onSuccess={() => setMode('login')} />
           )}

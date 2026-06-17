@@ -4,11 +4,13 @@ import { memo, useEffect, useRef, useState } from 'react'
 import { Heart, Star, MessageCircle } from 'lucide-react'
 import { Video } from '@/src/types/video'
 import { CommentSection } from './CommentSection'
+import { useAuth } from '@/src/hooks/useAuth'
 
 interface VideoCardProps {
   video: Video
   onLike: (videoId: string) => void | Promise<void>
   onFavorite: (videoId: string) => void | Promise<void>
+  onCommentCountChange?: (videoId: string, count: number) => void
   likePending?: boolean
   favoritePending?: boolean
   muted?: boolean
@@ -16,11 +18,25 @@ interface VideoCardProps {
   isVisible?: boolean
 }
 
-function VideoCardInner({ video, onLike, onFavorite, likePending = false, favoritePending = false, muted = true, onMuteChange, isVisible = true }: VideoCardProps) {
+function VideoCardInner({ video, onLike, onFavorite, onCommentCountChange, likePending = false, favoritePending = false, muted = false, onMuteChange, isVisible = true }: VideoCardProps) {
+  const { isAuthenticated, isLoading: authLoading, requireAuth } = useAuth()
   const videoUrl = video.videoUrl || video.url || ''
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const [coverLoaded, setCoverLoaded] = useState(false)
   const [showComments, setShowComments] = useState(false)
+
+  const handleCommentClick = () => {
+    if (authLoading) {
+      return
+    }
+
+    if (!isAuthenticated) {
+      requireAuth()
+      return
+    }
+
+    setShowComments((prev) => !prev)
+  }
 
   // 视频可见性控制：仅当前视频播放
   useEffect(() => {
@@ -149,7 +165,7 @@ function VideoCardInner({ video, onLike, onFavorite, likePending = false, favori
               <button
                 type="button"
                 aria-label={showComments ? '收起评论' : '查看评论'}
-                onClick={() => setShowComments(!showComments)}
+                onClick={handleCommentClick}
                 className="flex flex-col items-center p-2 border border-white/50 bg-black/50 hover:bg-white/15"
               >
                 <MessageCircle className={`w-6 h-6 ${showComments ? 'fill-white' : ''}`} />
@@ -161,7 +177,11 @@ function VideoCardInner({ video, onLike, onFavorite, likePending = false, favori
 
         {/* 评论区 */}
         {showComments && (
-          <CommentSection videoId={video.videoId} commentCount={video.commentCount} />
+          <CommentSection
+            videoId={video.videoId}
+            commentCount={video.commentCount}
+            onCommentCountChange={(count) => onCommentCountChange?.(video.videoId, count)}
+          />
         )}
       </div>
     </div>
@@ -181,6 +201,7 @@ export const VideoCard = memo(VideoCardInner, (prevProps, nextProps) => {
     prevProps.likePending === nextProps.likePending &&
     prevProps.favoritePending === nextProps.favoritePending &&
     prevProps.muted === nextProps.muted &&
-    prevProps.isVisible === nextProps.isVisible
+    prevProps.isVisible === nextProps.isVisible &&
+    prevProps.onCommentCountChange === nextProps.onCommentCountChange
   )
 })

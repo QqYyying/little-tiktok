@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState, useMemo } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { useVideoFeed } from '@/src/hooks/useVideoFeed'
 import { VideoCard } from './VideoCard'
@@ -8,8 +8,12 @@ import { VideoCard } from './VideoCard'
 const WHEEL_NAVIGATION_LOCK_MS = 400
 const TOUCH_SWIPE_THRESHOLD = 50
 
+function isCommentInteraction(target: EventTarget | null) {
+  return target instanceof HTMLElement && Boolean(target.closest('[data-comment-scroll]'))
+}
+
 export function VideoFeed() {
-  const [muted, setMuted] = useState(true)
+  const [muted, setMuted] = useState(false)
   const {
     currentVideo,
     nextVideoToPreload,
@@ -21,6 +25,7 @@ export function VideoFeed() {
     prevVideo,
     toggleLike,
     toggleFavorite,
+    updateCommentCount,
     loading,
     error,
     reload,
@@ -120,11 +125,25 @@ export function VideoFeed() {
   return (
     <div
       className="relative h-full overflow-hidden bg-black text-white"
-      onWheel={(event) => handleWheelNavigation(event.deltaY)}
+      onWheel={(event) => {
+        if (isCommentInteraction(event.target)) {
+          return
+        }
+        handleWheelNavigation(event.deltaY)
+      }}
       onTouchStart={(event) => {
+        if (isCommentInteraction(event.target)) {
+          touchStartYRef.current = null
+          return
+        }
         touchStartYRef.current = event.touches[0]?.clientY ?? null
       }}
       onTouchEnd={(event) => {
+        if (isCommentInteraction(event.target)) {
+          touchStartYRef.current = null
+          return
+        }
+
         const touchStartY = touchStartYRef.current
         const touchEndY = event.changedTouches[0]?.clientY ?? null
 
@@ -162,6 +181,7 @@ export function VideoFeed() {
           video={currentVideo}
           onLike={toggleLike}
           onFavorite={toggleFavorite}
+          onCommentCountChange={updateCommentCount}
           likePending={currentVideoLikePending}
           favoritePending={currentVideoFavoritePending}
           muted={muted}

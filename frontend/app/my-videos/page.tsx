@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Video, Heart, Star, History } from 'lucide-react'
 import { FavoriteList, LikedVideoList, MyVideoList, ViewHistoryList } from '@/src/components/my-videos'
 import { useAuth } from '@/src/hooks/useAuth'
@@ -16,7 +16,17 @@ const tabs: { key: Tab; label: string; icon: typeof Video }[] = [
 
 export default function MyVideosPage() {
   const [activeTab, setActiveTab] = useState<Tab>('videos')
-  const { user } = useAuth()
+  const { user, isAuthenticated, isLoading, requireAuth } = useAuth()
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      requireAuth('/my-videos')
+    }
+  }, [isAuthenticated, isLoading, requireAuth])
+
+  if (isLoading || !isAuthenticated) {
+    return null
+  }
 
   // 获取用户名首字母用于头像显示
   const getInitial = (name: string) => {

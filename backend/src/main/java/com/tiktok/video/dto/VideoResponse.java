@@ -13,6 +13,7 @@ public class VideoResponse {
     private String coverUrl;
     private Integer likeCount;
     private Integer favoriteCount;
+    private Integer commentCount;
     private Boolean liked;
     private Boolean favorited;
     private String status;
@@ -89,6 +90,14 @@ public class VideoResponse {
 
     public void setFavoriteCount(Integer favoriteCount) {
         this.favoriteCount = favoriteCount;
+    }
+
+    public Integer getCommentCount() {
+        return commentCount;
+    }
+
+    public void setCommentCount(Integer commentCount) {
+        this.commentCount = commentCount;
     }
 
     public Boolean getLiked() {

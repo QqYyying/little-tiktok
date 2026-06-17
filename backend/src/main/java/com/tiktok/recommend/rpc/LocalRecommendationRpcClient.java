@@ -1,7 +1,5 @@
 package com.tiktok.recommend.rpc;
 
-import com.tiktok.common.enums.ErrorCode;
-import com.tiktok.common.exception.BizException;
 import com.tiktok.recommend.dto.RecommendFeedResponse;
 import com.tiktok.recommend.dto.RecommendRpcRequest;
 import com.tiktok.recommend.dto.RecommendRpcResponse;
@@ -9,8 +7,8 @@ import com.tiktok.recommend.service.RecommendationService;
 import org.springframework.stereotype.Component;
 
 /**
- * 本地 RPC 边界模拟实现。
- * 当前通过本地 Bean 调用 RecommendationService，后续可替换为 gRPC / Dubbo Client。
+ * Local RPC boundary implementation.
+ * It currently delegates to RecommendationService and can later be replaced by gRPC / Dubbo.
  */
 @Component
 public class LocalRecommendationRpcClient implements RecommendationRpcClient {
@@ -24,10 +22,7 @@ public class LocalRecommendationRpcClient implements RecommendationRpcClient {
     @Override
     public RecommendRpcResponse recommend(RecommendRpcRequest request) {
         if (request == null) {
-            throw new BizException(ErrorCode.INVALID_ARGUMENT, "request 不能为空");
-        }
-        if (request.getUserId() == null || request.getUserId().isBlank()) {
-            throw new BizException(ErrorCode.INVALID_ARGUMENT, "userId 不能为空");
+            request = new RecommendRpcRequest();
         }
 
         RecommendFeedResponse feedResponse = recommendationService.getRecommendFeed(

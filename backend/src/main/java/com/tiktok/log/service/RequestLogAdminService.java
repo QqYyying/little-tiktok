@@ -6,6 +6,7 @@ import com.tiktok.common.exception.BizException;
 import com.tiktok.log.dto.ApiMetricsQueryRequest;
 import com.tiktok.log.dto.ApiMetricsRecordResponse;
 import com.tiktok.log.dto.ApiMetricsResponse;
+import com.tiktok.log.dto.ApiMetricsSummaryResponse;
 import com.tiktok.log.dto.RequestLogPageQuery;
 import com.tiktok.log.dto.RequestLogPageResponse;
 import com.tiktok.log.dto.RequestLogRecordResponse;
@@ -56,15 +57,38 @@ public class RequestLogAdminService {
     public ApiMetricsResponse getApiMetrics(ApiMetricsQueryRequest query) {
         PermissionUtils.requireAdmin();
         ApiMetricsQueryRequest normalizedQuery = normalizeMetricsQuery(query == null ? new ApiMetricsQueryRequest() : query);
+        ApiMetricsSummaryResponse summary = requestLogMapper.selectApiMetricsSummary(normalizedQuery);
         List<ApiMetricsRecordResponse> records = requestLogMapper.selectApiMetrics(normalizedQuery);
+        records.forEach(record -> record.setPath(toApiPathPattern(record.getPath(), record.getMethod())));
         records.forEach(this::fillRates);
 
         ApiMetricsResponse response = new ApiMetricsResponse();
         response.setStartTime(formatDateTime(normalizedQuery.getStartDateTime()));
         response.setEndTime(formatDateTime(normalizedQuery.getEndDateTime()));
         response.setTotalApis(records.size());
+        response.setSummary(normalizeSummary(summary));
         response.setRecords(records);
         return response;
+    }
+
+    private ApiMetricsSummaryResponse normalizeSummary(ApiMetricsSummaryResponse summary) {
+        ApiMetricsSummaryResponse normalized = summary == null ? new ApiMetricsSummaryResponse() : summary;
+        if (normalized.getRequestCount() == null) {
+            normalized.setRequestCount(0L);
+        }
+        if (normalized.getSuccessCount() == null) {
+            normalized.setSuccessCount(0L);
+        }
+        if (normalized.getFailCount() == null) {
+            normalized.setFailCount(0L);
+        }
+        if (normalized.getSlowCount() == null) {
+            normalized.setSlowCount(0L);
+        }
+        if (normalized.getAvgCostTime() == null) {
+            normalized.setAvgCostTime(0.0);
+        }
+        return normalized;
     }
 
     private RequestLogPageQuery normalize(RequestLogPageQuery query) {
@@ -136,6 +160,36 @@ public class RequestLogAdminService {
         return dateTime == null ? null : DATE_TIME_FORMATTER.format(dateTime);
     }
 
+    private String toApiPathPattern(String path, String method) {
+        if (!hasText(path)) {
+            return path;
+        }
+        String normalizedPath = path.trim();
+        if (normalizedPath.contains("{")) {
+            return normalizedPath;
+        }
+        String normalizedMethod = method == null ? "" : method.trim().toUpperCase();
+
+        if (normalizedPath.matches("^/api/v1/videos/[^/]+$")) {
+            return "/api/v1/videos/{videoId}";
+        }
+        if (normalizedPath.matches("^/api/v1/videos/[^/]+/(like|favorite|view)$")) {
+            String action = normalizedPath.substring(normalizedPath.lastIndexOf('/') + 1);
+            return "/api/v1/videos/{videoId}/" + action;
+        }
+        if (normalizedPath.matches("^/api/v1/comments/[^/]+$")) {
+            return "GET".equals(normalizedMethod)
+                    ? "/api/v1/comments/{videoId}"
+                    : "/api/v1/comments/{commentId}";
+        }
+        if (normalizedPath.matches("^/api/v1/comments/[^/]+/(like|unlike)$")) {
+            String action = normalizedPath.substring(normalizedPath.lastIndexOf('/') + 1);
+            return "/api/v1/comments/{commentId}/" + action;
+        }
+
+        return normalizedPath;
+    }
+
     private Boolean parseBoolean(String value, String fieldName) {
         if (!hasText(value)) {
             return null;
@@ -167,6 +221,8 @@ public class RequestLogAdminService {
         response.setInterfaceName(requestLog.getInterfaceName());
         response.setMethod(requestLog.getMethod());
         response.setPath(requestLog.getPath());
+        response.setInputData(requestLog.getInputData());
+        response.setOutputData(requestLog.getOutputData());
         response.setCostTime(requestLog.getCostTime());
         response.setIsSlow(requestLog.getIsSlow());
         response.setHttpStatus(requestLog.getHttpStatus());

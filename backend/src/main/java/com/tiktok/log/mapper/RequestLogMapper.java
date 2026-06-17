@@ -2,6 +2,7 @@ package com.tiktok.log.mapper;
 
 import com.tiktok.log.dto.ApiMetricsQueryRequest;
 import com.tiktok.log.dto.ApiMetricsRecordResponse;
+import com.tiktok.log.dto.ApiMetricsSummaryResponse;
 import com.tiktok.log.dto.RequestLogPageQuery;
 import com.tiktok.log.entity.RequestLog;
 
@@ -14,6 +15,8 @@ public interface RequestLogMapper {
     long countByQuery(RequestLogPageQuery query);
 
     List<RequestLog> selectPageByQuery(RequestLogPageQuery query);
+
+    ApiMetricsSummaryResponse selectApiMetricsSummary(ApiMetricsQueryRequest query);
 
     List<ApiMetricsRecordResponse> selectApiMetrics(ApiMetricsQueryRequest query);
 }

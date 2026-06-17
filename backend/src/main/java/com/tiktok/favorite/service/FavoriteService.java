@@ -124,6 +124,7 @@ public class FavoriteService {
         response.setCoverUrl(video.getCoverUrl());
         response.setLikeCount(video.getLikeCount());
         response.setFavoriteCount(video.getFavoriteCount());
+        response.setCommentCount(video.getCommentCount());
         response.setStatus(video.getStatus());
         response.setCreatedAt(video.getCreatedAt());
         response.setUpdatedAt(video.getUpdatedAt());

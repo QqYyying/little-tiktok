@@ -1,8 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Trash2, Heart, Star, Calendar, ChevronLeft, ChevronRight, Video, X } from 'lucide-react'
+import { Trash2, Heart, Star, Calendar, Video, X } from 'lucide-react'
 import { deleteVideo, getMyVideos, type VideoRecord } from '@/src/api/video'
+import { PaginationControls } from './PaginationControls'
 
 export function MyVideoList() {
   const [videos, setVideos] = useState<VideoRecord[]>([])
@@ -105,8 +106,6 @@ export function MyVideoList() {
     )
   }
 
-  const totalPages = Math.max(1, Math.ceil(total / pageSize))
-
   return (
     <div className="p-4">
       {/* 视频列表 */}
@@ -158,48 +157,7 @@ export function MyVideoList() {
         ))}
       </div>
 
-      {/* 分页 */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 mt-6 pt-4 border-t border-gray-100">
-          <button
-            onClick={() => setPage((current) => Math.max(1, current - 1))}
-            disabled={page === 1}
-            className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-
-          <div className="flex items-center gap-1">
-            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-              const pageNum = i + 1
-              return (
-                <button
-                  key={pageNum}
-                  onClick={() => setPage(pageNum)}
-                  className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                    page === pageNum
-                      ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white'
-                      : 'text-gray-600 hover:bg-gray-100'
-                  }`}
-                >
-                  {pageNum}
-                </button>
-              )
-            })}
-            {totalPages > 5 && (
-              <span className="px-2 text-gray-400">...</span>
-            )}
-          </div>
-
-          <button
-            onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
-            disabled={page >= totalPages}
-            className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
-        </div>
-      )}
+      <PaginationControls page={page} pageSize={pageSize} total={total} onPageChange={setPage} />
 
       {/* 视频播放弹窗 */}
       {selectedVideo && (

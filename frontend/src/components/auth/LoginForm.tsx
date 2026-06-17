@@ -30,6 +30,8 @@ export function LoginForm({ onSuccess }: { onSuccess?: () => void }) {
       login(result.token, {
         userId: result.userId,
         username: result.username,
+        status: result.status,
+        role: result.role,
       })
       onSuccess?.()
     } catch (err) {

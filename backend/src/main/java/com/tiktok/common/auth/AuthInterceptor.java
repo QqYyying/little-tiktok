@@ -39,6 +39,11 @@ public class AuthInterceptor implements HandlerInterceptor {
         if (HttpMethod.OPTIONS.matches(request.getMethod())) {
             return true;
         }
+        if (isPublicReadRequest(request) && !hasAuthorizationHeader(request)) {
+            UserContext.clear();
+            return true;
+        }
+
         String token = jwtUtil.extractBearerToken(request.getHeader("Authorization"));
         JwtUserInfo userInfo = jwtUtil.parseToken(token);
         boolean tokenBlacklisted = tokenBlacklistMapper.existsByToken(token) > 0;
@@ -63,5 +68,17 @@ public class AuthInterceptor implements HandlerInterceptor {
 
     private boolean isLogoutRequest(HttpServletRequest request) {
         return HttpMethod.POST.matches(request.getMethod()) && LOGOUT_PATH.equals(request.getRequestURI());
+    }
+
+    private boolean isPublicReadRequest(HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        return HttpMethod.GET.matches(request.getMethod())
+                && ("/api/v1/recommend/feed".equals(uri)
+                || uri.matches("^/api/v1/comments/[^/]+$"));
+    }
+
+    private boolean hasAuthorizationHeader(HttpServletRequest request) {
+        String authorization = request.getHeader("Authorization");
+        return authorization != null && !authorization.isBlank();
     }
 }

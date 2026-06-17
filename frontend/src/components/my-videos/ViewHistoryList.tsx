@@ -3,12 +3,15 @@
 import { useEffect, useState } from 'react'
 import { Clock3, Heart, Calendar, X } from 'lucide-react'
 import { getViewHistory, type ViewHistoryItem } from '@/src/api/video'
+import { PaginationControls } from './PaginationControls'
 
 export function ViewHistoryList() {
   const [items, setItems] = useState<ViewHistoryItem[]>([])
+  const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [selectedVideo, setSelectedVideo] = useState<ViewHistoryItem | null>(null)
+  const pageSize = 10
 
   useEffect(() => {
     if (!selectedVideo) return
@@ -31,6 +34,7 @@ export function ViewHistoryList() {
         const data = await getViewHistory()
         if (cancelled) return
         setItems(data.items)
+        setPage(1)
       } catch (err) {
         if (cancelled) return
         setError(err instanceof Error ? err.message : '加载浏览记录失败')
@@ -82,9 +86,11 @@ export function ViewHistoryList() {
     )
   }
 
+  const pagedItems = items.slice((page - 1) * pageSize, page * pageSize)
+
   return (
     <div className="p-4 space-y-4">
-      {items.map((item) => (
+      {pagedItems.map((item) => (
         <div
           key={`${item.videoId}-${item.viewedAt ?? item.createdAt}`}
           onClick={() => setSelectedVideo(item)}
@@ -107,6 +113,8 @@ export function ViewHistoryList() {
           </div>
         </div>
       ))}
+
+      <PaginationControls page={page} pageSize={pageSize} total={items.length} onPageChange={setPage} />
 
       {/* 视频播放弹窗 */}
       {selectedVideo && (

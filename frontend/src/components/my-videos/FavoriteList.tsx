@@ -5,6 +5,7 @@ import { Heart, Star, Trash2, Calendar, X } from 'lucide-react'
 import { getFavorites, unfavoriteVideo } from '@/src/api/favorite'
 import { type MyVideosPageData } from '@/src/api/video'
 import { resolveMediaUrl } from '@/src/utils/media'
+import { PaginationControls } from './PaginationControls'
 
 interface VideoRecord {
   videoId: string
@@ -122,8 +123,6 @@ export function FavoriteList() {
     )
   }
 
-  const totalPages = Math.max(1, Math.ceil(total / pageSize))
-
   return (
     <div className="p-4 space-y-4">
       {videos.map((video) => (
@@ -153,23 +152,7 @@ export function FavoriteList() {
         </div>
       ))}
 
-      <div className="flex items-center justify-center gap-2 pt-4 border-t border-gray-100">
-        <button
-          onClick={() => setPage((current) => Math.max(1, current - 1))}
-          disabled={page === 1}
-          className="px-3 py-1 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-        >
-          上一页
-        </button>
-        <span className="text-sm text-gray-500">第 {page} 页 / 共 {totalPages} 页</span>
-        <button
-          onClick={() => setPage((current) => current + 1)}
-          disabled={page >= totalPages}
-          className="px-3 py-1 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-        >
-          下一页
-        </button>
-      </div>
+      <PaginationControls page={page} pageSize={pageSize} total={total} onPageChange={setPage} />
 
       {/* 视频播放弹窗 */}
       {selectedVideo && (

@@ -20,6 +20,7 @@ public class RecommendVideoItemResponse {
     private String coverUrl;
     private Integer likeCount;
     private Integer favoriteCount;
+    private Integer commentCount;
     private Boolean liked;
     private Boolean favorited;
     private LocalDateTime createdAt;

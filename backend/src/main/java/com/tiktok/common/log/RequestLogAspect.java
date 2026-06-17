@@ -179,7 +179,7 @@ public class RequestLogAspect {
         requestLog.setRequestId(getRequestId());
         requestLog.setUserId(getCurrentUserId());
         requestLog.setMethod(request == null ? null : request.getMethod());
-        requestLog.setPath(request == null ? null : request.getRequestURI());
+        requestLog.setPath(getPathPattern(request));
         requestLog.setClientIp(getClientIp(request));
         requestLog.setHttpStatus(response == null ? DEFAULT_SUCCESS_STATUS : response.getStatus());
         long costTime = System.currentTimeMillis() - startTime;
@@ -412,6 +412,17 @@ public class RequestLogAspect {
 
     private String getInterfaceName(ProceedingJoinPoint joinPoint) {
         return joinPoint.getSignature().getDeclaringType().getSimpleName() + "." + joinPoint.getSignature().getName();
+    }
+
+    private String getPathPattern(HttpServletRequest request) {
+        if (request == null) {
+            return null;
+        }
+        Object pattern = request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
+        if (pattern instanceof String value && hasText(value)) {
+            return value;
+        }
+        return request.getRequestURI();
     }
 
     private String getHandlerInterfaceName(Object handler) {

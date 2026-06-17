@@ -20,6 +20,26 @@
         <result property="createdAt" column="created_at"/>
     </resultMap>
 
+    <resultMap id="ApiMetricsSummaryResultMap" type="com.tiktok.log.dto.ApiMetricsSummaryResponse">
+        <result property="requestCount" column="request_count"/>
+        <result property="successCount" column="success_count"/>
+        <result property="failCount" column="fail_count"/>
+        <result property="slowCount" column="slow_count"/>
+        <result property="avgCostTime" column="avg_cost_time"/>
+    </resultMap>
+
+    <resultMap id="ApiMetricsRecordResultMap" type="com.tiktok.log.dto.ApiMetricsRecordResponse">
+        <result property="path" column="path"/>
+        <result property="method" column="method"/>
+        <result property="requestCount" column="request_count"/>
+        <result property="successCount" column="success_count"/>
+        <result property="failCount" column="fail_count"/>
+        <result property="slowCount" column="slow_count"/>
+        <result property="avgCostTime" column="avg_cost_time"/>
+        <result property="maxCostTime" column="max_cost_time"/>
+        <result property="minCostTime" column="min_cost_time"/>
+    </resultMap>
+
     <sql id="QueryWhere">
         <where>
             <if test="userId != null and userId != ''">
@@ -72,23 +92,20 @@
 
     <select id="selectPageByQuery" parameterType="com.tiktok.log.dto.RequestLogPageQuery" resultMap="RequestLogResultMap">
         SELECT id, request_id, user_id, interface_name, method, path,
-               cost_time, is_slow, http_status, success, error_code, client_ip, created_at
+               input_data, output_data, cost_time, is_slow, http_status,
+               success, error_code, client_ip, created_at
         FROM request_log
         <include refid="QueryWhere"/>
         ORDER BY created_at DESC
         LIMIT #{limit} OFFSET #{offset}
     </select>
 
-    <select id="selectApiMetrics" parameterType="com.tiktok.log.dto.ApiMetricsQueryRequest" resultType="com.tiktok.log.dto.ApiMetricsRecordResponse">
-        SELECT path,
-               method,
-               COUNT(*) AS requestCount,
-               SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) AS successCount,
-               SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END) AS failCount,
-               SUM(CASE WHEN is_slow = 1 THEN 1 ELSE 0 END) AS slowCount,
-               AVG(cost_time) AS avgCostTime,
-               MAX(cost_time) AS maxCostTime,
-               MIN(cost_time) AS minCostTime
+    <select id="selectApiMetricsSummary" parameterType="com.tiktok.log.dto.ApiMetricsQueryRequest" resultMap="ApiMetricsSummaryResultMap">
+        SELECT COUNT(*) AS request_count,
+               SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) AS success_count,
+               SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END) AS fail_count,
+               SUM(CASE WHEN is_slow = 1 THEN 1 ELSE 0 END) AS slow_count,
+               COALESCE(AVG(cost_time), 0) AS avg_cost_time
         FROM request_log
         <where>
             <if test="startDateTime != null">
@@ -107,15 +124,48 @@
                 AND path NOT LIKE '/api/v1/admin/%'
             </if>
         </where>
-        GROUP BY path, method
+    </select>
+
+    <select id="selectApiMetrics" parameterType="com.tiktok.log.dto.ApiMetricsQueryRequest" resultMap="ApiMetricsRecordResultMap">
+        SELECT COALESCE(
+                   MIN(CASE WHEN path LIKE '%{%' THEN path END),
+                   MIN(path)
+               ) AS path,
+               method,
+               COUNT(*) AS request_count,
+               SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) AS success_count,
+               SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END) AS fail_count,
+               SUM(CASE WHEN is_slow = 1 THEN 1 ELSE 0 END) AS slow_count,
+               AVG(cost_time) AS avg_cost_time,
+               MAX(cost_time) AS max_cost_time,
+               MIN(cost_time) AS min_cost_time
+        FROM request_log
+        <where>
+            <if test="startDateTime != null">
+                AND created_at &gt;= #{startDateTime}
+            </if>
+            <if test="endDateTime != null">
+                AND created_at &lt;= #{endDateTime}
+            </if>
+            <if test="path != null and path != ''">
+                AND path LIKE CONCAT('%', #{path}, '%')
+            </if>
+            <if test="method != null and method != ''">
+                AND method = #{method}
+            </if>
+            <if test="includeAdmin != null and includeAdmin == false">
+                AND path NOT LIKE '/api/v1/admin/%'
+            </if>
+        </where>
+        GROUP BY method, COALESCE(interface_name, path)
         HAVING COUNT(*) &gt;= #{minCount}
         ORDER BY
         <choose>
-            <when test="orderByColumn == 'max_cost_time'">maxCostTime</when>
-            <when test="orderByColumn == 'request_count'">requestCount</when>
-            <when test="orderByColumn == 'slow_count'">slowCount</when>
-            <when test="orderByColumn == 'fail_count'">failCount</when>
-            <otherwise>avgCostTime</otherwise>
+            <when test="orderByColumn == 'max_cost_time'">max_cost_time</when>
+            <when test="orderByColumn == 'request_count'">request_count</when>
+            <when test="orderByColumn == 'slow_count'">slow_count</when>
+            <when test="orderByColumn == 'fail_count'">fail_count</when>
+            <otherwise>avg_cost_time</otherwise>
         </choose>
         DESC
         LIMIT #{limit}

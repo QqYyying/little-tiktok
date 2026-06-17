@@ -12,6 +12,8 @@ public class RequestLogRecordResponse {
     private String interfaceName;
     private String method;
     private String path;
+    private String inputData;
+    private String outputData;
     private Long costTime;
     private Boolean isSlow;
     private Integer httpStatus;
@@ -68,6 +70,22 @@ public class RequestLogRecordResponse {
 
     public void setPath(String path) {
         this.path = path;
+    }
+
+    public String getInputData() {
+        return inputData;
+    }
+
+    public void setInputData(String inputData) {
+        this.inputData = inputData;
+    }
+
+    public String getOutputData() {
+        return outputData;
+    }
+
+    public void setOutputData(String outputData) {
+        this.outputData = outputData;
     }
 
     public Long getCostTime() {

@@ -23,7 +23,13 @@ public interface VideoMapper {
 
     long countActiveVideos();
 
+    long countUnviewedActiveVideos(@Param("userId") String userId);
+
     List<Video> findActiveVideosPage(@Param("count") int count, @Param("offset") int offset);
+
+    List<Video> findUnviewedRecommendVideosPage(@Param("userId") String userId,
+                                                @Param("limit") int limit,
+                                                @Param("offset") int offset);
 
     List<Video> findViewedVideos(@Param("userId") String userId);
 

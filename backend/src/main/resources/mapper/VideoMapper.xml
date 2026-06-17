@@ -12,6 +12,7 @@
         <result property="coverUrl" column="cover_url"/>
         <result property="likeCount" column="like_count"/>
         <result property="favoriteCount" column="favorite_count"/>
+        <result property="commentCount" column="comment_count"/>
         <result property="status" column="status"/>
         <result property="createdAt" column="created_at"/>
         <result property="updatedAt" column="updated_at"/>
@@ -28,6 +29,7 @@
         v.cover_url,
         v.like_count,
         v.favorite_count,
+        v.comment_count,
         v.status,
         v.created_at,
         v.updated_at,
@@ -106,6 +108,19 @@
           AND v.deleted_at IS NULL
     </select>
 
+    <select id="countUnviewedActiveVideos" resultType="long">
+        SELECT COUNT(1)
+        FROM video v
+        WHERE v.status = 'ACTIVE'
+          AND v.deleted_at IS NULL
+          AND NOT EXISTS (
+              SELECT 1
+              FROM video_view vv
+              WHERE vv.user_id = #{userId}
+                AND vv.video_id = v.id
+          )
+    </select>
+
     <select id="findActiveVideosPage" resultMap="VideoResultMap">
         SELECT
             <include refid="BaseSelectColumns"/>
@@ -115,6 +130,23 @@
           AND v.deleted_at IS NULL
         ORDER BY v.like_count DESC, v.created_at DESC
         LIMIT #{count} OFFSET #{offset}
+    </select>
+
+    <select id="findUnviewedRecommendVideosPage" resultMap="VideoResultMap">
+        SELECT
+            <include refid="BaseSelectColumns"/>
+        FROM video v
+        LEFT JOIN `user` u ON u.id = v.author_id
+        WHERE v.status = 'ACTIVE'
+          AND v.deleted_at IS NULL
+          AND NOT EXISTS (
+              SELECT 1
+              FROM video_view vv
+              WHERE vv.user_id = #{userId}
+                AND vv.video_id = v.id
+          )
+        ORDER BY v.like_count DESC, v.created_at DESC
+        LIMIT #{limit} OFFSET #{offset}
     </select>
 
     <select id="findViewedVideos" resultMap="VideoResultMap">

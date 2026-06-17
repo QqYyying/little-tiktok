@@ -6,12 +6,49 @@ import { getRecommendFeed } from '@/src/services/recommend'
 import { likeVideo, unlikeVideo } from '@/src/services/like'
 import { favoriteVideo, unfavoriteVideo } from '@/src/services/favorite'
 import { reportVideoView } from '@/src/services/video'
+import { useAuth } from '@/src/hooks/useAuth'
 
-const DEFAULT_FEED_COUNT = 5
-const LOAD_MORE_THRESHOLD = 2
+const DEFAULT_FEED_COUNT = 8
+const LOAD_MORE_COUNT = 20
+const LOAD_MORE_THRESHOLD = 3
+const GUEST_VIEWED_VIDEO_IDS_KEY = 'little-tiktok:guest-viewed-video-ids'
+const MAX_GUEST_VIEWED_VIDEO_IDS = 500
+const MAX_GUEST_FEED_FETCH_PAGES = 5
 const PRELOAD_VIDEO_COUNT = 2  // 预加载视频数量
 
+function readGuestViewedVideoIds() {
+  if (typeof window === 'undefined') {
+    return new Set<string>()
+  }
+
+  try {
+    const raw = localStorage.getItem(GUEST_VIEWED_VIDEO_IDS_KEY)
+    const ids = raw ? JSON.parse(raw) : []
+    if (!Array.isArray(ids)) {
+      return new Set<string>()
+    }
+
+    return new Set(ids.filter((id): id is string => typeof id === 'string' && id.length > 0))
+  } catch {
+    return new Set<string>()
+  }
+}
+
+function writeGuestViewedVideoIds(ids: Set<string>) {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  try {
+    const nextIds = Array.from(ids).slice(-MAX_GUEST_VIEWED_VIDEO_IDS)
+    localStorage.setItem(GUEST_VIEWED_VIDEO_IDS_KEY, JSON.stringify(nextIds))
+  } catch {
+    // Ignore storage failures so browsing still works in private or restricted modes.
+  }
+}
+
 export function useVideoFeed() {
+  const { isAuthenticated, isLoading: authLoading, requireAuth } = useAuth()
   const [videos, setVideos] = useState<Video[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -25,10 +62,11 @@ export function useVideoFeed() {
   const loadingFeedPromiseRef = useRef<Promise<number> | null>(null)
   const pendingLikeVideoIdsRef = useRef<Set<string>>(new Set())
   const pendingFavoriteVideoIdsRef = useRef<Set<string>>(new Set())
+  const guestViewedVideoIdsRef = useRef<Set<string>>(new Set())
+  const guestFeedOffsetRef = useRef(0)
   const videosRef = useRef<Video[]>([])
   const currentIndexRef = useRef(0)
   const hasMoreRef = useRef(false)
-  const nextOffsetRef = useRef(0)
 
   const loadFeed = useCallback(async (count: number, append: boolean) => {
     if (loadingFeedRef.current) {
@@ -43,14 +81,51 @@ export function useVideoFeed() {
       }
 
       try {
-        const offset = append ? nextOffsetRef.current : 0
-        const response = await getRecommendFeed({ count, offset })
-        setHasMore(response.hasMore)
-        hasMoreRef.current = response.hasMore
-        nextOffsetRef.current = offset + response.items.length
+        const guestViewedVideoIds = isAuthenticated ? new Set<string>() : readGuestViewedVideoIds()
+        guestViewedVideoIdsRef.current = guestViewedVideoIds
+        const existingIds = new Set(append ? videosRef.current.map((video) => video.videoId) : [])
+        const collectedItems: Video[] = []
+        let nextHasMore = false
+        let offset = isAuthenticated ? 0 : append ? guestFeedOffsetRef.current : 0
+        let pagesFetched = 0
 
+        do {
+          // The backend removes viewed videos from the recommendation result set for logged-in users.
+          // Always fetching logged-in feeds from offset 0 avoids skipping items while that set shrinks.
+          const response = await getRecommendFeed({ count, offset: isAuthenticated ? 0 : offset })
+          nextHasMore = response.hasMore
+
+          const items = response.items.filter((video) => {
+            if (existingIds.has(video.videoId)) {
+              return false
+            }
+            return isAuthenticated || !guestViewedVideoIds.has(video.videoId)
+          })
+
+          for (const item of items) {
+            existingIds.add(item.videoId)
+            collectedItems.push(item)
+          }
+
+          pagesFetched += 1
+          offset += response.items.length
+        } while (
+          !isAuthenticated &&
+          collectedItems.length === 0 &&
+          nextHasMore &&
+          pagesFetched < MAX_GUEST_FEED_FETCH_PAGES
+        )
+
+        setHasMore(nextHasMore)
+        hasMoreRef.current = nextHasMore
+        if (!isAuthenticated) {
+          guestFeedOffsetRef.current = offset
+        }
+
+        let addedCount = 0
         setVideos((prev) => {
-          const nextVideos = append ? [...prev, ...response.items] : response.items
+          addedCount = collectedItems.length
+          const nextVideos = append ? [...prev, ...collectedItems] : collectedItems
           videosRef.current = nextVideos
           return nextVideos
         })
@@ -60,7 +135,7 @@ export function useVideoFeed() {
           setCurrentIndex(0)
         }
 
-        return response.items.length
+        return addedCount
       } catch (err) {
         console.error('Failed to load recommend feed', err)
         setError(err instanceof Error ? err.message : '加载推荐视频失败')
@@ -68,7 +143,6 @@ export function useVideoFeed() {
           videosRef.current = []
           currentIndexRef.current = 0
           hasMoreRef.current = false
-          nextOffsetRef.current = 0
           setVideos([])
           setCurrentIndex(0)
           setHasMore(false)
@@ -83,15 +157,27 @@ export function useVideoFeed() {
 
     loadingFeedPromiseRef.current = loadPromise
     return loadPromise
-  }, [])
+  }, [isAuthenticated])
 
   useEffect(() => {
-    void loadFeed(DEFAULT_FEED_COUNT, false)
-  }, [loadFeed])
+    if (!authLoading) {
+      void loadFeed(DEFAULT_FEED_COUNT, false)
+    }
+  }, [authLoading, loadFeed])
 
   const reportViewedVideo = useCallback(async (video: Video | null | undefined) => {
     const videoId = video?.videoId
     if (!videoId) {
+      return
+    }
+
+    if (!isAuthenticated) {
+      const guestViewedVideoIds = guestViewedVideoIdsRef.current.size > 0
+        ? new Set(guestViewedVideoIdsRef.current)
+        : readGuestViewedVideoIds()
+      guestViewedVideoIds.add(videoId)
+      guestViewedVideoIdsRef.current = guestViewedVideoIds
+      writeGuestViewedVideoIds(guestViewedVideoIds)
       return
     }
 
@@ -109,7 +195,16 @@ export function useVideoFeed() {
     } finally {
       reportingVideoIdsRef.current.delete(videoId)
     }
-  }, [])
+  }, [isAuthenticated])
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      guestViewedVideoIdsRef.current = readGuestViewedVideoIds()
+      guestFeedOffsetRef.current = 0
+      reportedVideoIdsRef.current.clear()
+      reportingVideoIdsRef.current.clear()
+    }
+  }, [isAuthenticated])
 
   const preloadVideos = useCallback((fromIndex: number) => {
     // 预加载当前视频之后的多个视频
@@ -150,7 +245,7 @@ export function useVideoFeed() {
       return
     }
 
-    const loadedCount = await loadFeed(DEFAULT_FEED_COUNT, true)
+    const loadedCount = await loadFeed(LOAD_MORE_COUNT, true)
     if (loadedCount > 0 && currentVideoIndex < videosRef.current.length - 1) {
       goToVideo(currentVideoIndex + 1)
     }
@@ -170,7 +265,7 @@ export function useVideoFeed() {
       return
     }
 
-    await loadFeed(DEFAULT_FEED_COUNT, true)
+    await loadFeed(LOAD_MORE_COUNT, true)
   }, [loadFeed])
 
   useEffect(() => {
@@ -185,6 +280,15 @@ export function useVideoFeed() {
   }, [currentIndex, reportViewedVideo, videos])
 
   const toggleLike = useCallback(async (videoId: string) => {
+    if (authLoading) {
+      return
+    }
+
+    if (!isAuthenticated) {
+      requireAuth()
+      return
+    }
+
     if (pendingLikeVideoIdsRef.current.has(videoId)) {
       return
     }
@@ -219,9 +323,18 @@ export function useVideoFeed() {
       pendingLikeVideoIdsRef.current.delete(videoId)
       setPendingLikeVideoIds(new Set(pendingLikeVideoIdsRef.current))
     }
-  }, [])
+  }, [authLoading, isAuthenticated, requireAuth])
 
   const toggleFavorite = useCallback(async (videoId: string) => {
+    if (authLoading) {
+      return
+    }
+
+    if (!isAuthenticated) {
+      requireAuth()
+      return
+    }
+
     if (pendingFavoriteVideoIdsRef.current.has(videoId)) {
       return
     }
@@ -256,6 +369,18 @@ export function useVideoFeed() {
       pendingFavoriteVideoIdsRef.current.delete(videoId)
       setPendingFavoriteVideoIds(new Set(pendingFavoriteVideoIdsRef.current))
     }
+  }, [authLoading, isAuthenticated, requireAuth])
+
+  const updateCommentCount = useCallback((videoId: string, commentCount: number) => {
+    setVideos((prev) => {
+      const nextVideos = prev.map((video) =>
+        video.videoId === videoId
+          ? { ...video, commentCount }
+          : video
+      )
+      videosRef.current = nextVideos
+      return nextVideos
+    })
   }, [])
 
   const currentVideo = videos[currentIndex] || null
@@ -277,6 +402,7 @@ export function useVideoFeed() {
     prevVideo,
     toggleLike,
     toggleFavorite,
+    updateCommentCount,
     loadMore,
     reload: () => loadFeed(DEFAULT_FEED_COUNT, false),
   }

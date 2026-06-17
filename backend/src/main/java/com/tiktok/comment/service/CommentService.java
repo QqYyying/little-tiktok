@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -25,8 +24,8 @@ public class CommentService {
 
     @Transactional
     public CommentResponse createComment(String videoId, CommentRequest request) {
-        String userId = com.tiktok.common.auth.UserContext.getUserId();
-        
+        String userId = com.tiktok.common.auth.UserContext.getCurrentUserId();
+
         Comment comment = Comment.builder()
                 .id(ResourceIdUtil.nextCommentId())
                 .videoId(videoId)
@@ -37,24 +36,24 @@ public class CommentService {
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
-        
+
         commentMapper.insert(comment);
         return buildResponse(comment);
     }
 
     @Transactional
     public void deleteComment(String commentId) {
-        String userId = com.tiktok.common.auth.UserContext.getUserId();
+        String userId = com.tiktok.common.auth.UserContext.getCurrentUserId();
         Comment comment = commentMapper.selectById(commentId);
-        
+
         if (comment == null) {
-            throw new RuntimeException("评论不存在");
+            throw new RuntimeException("Comment not found");
         }
-        
+
         if (!comment.getUserId().equals(userId)) {
-            throw new RuntimeException("无权限删除此评论");
+            throw new RuntimeException("No permission to delete this comment");
         }
-        
+
         commentMapper.deleteById(commentId);
     }
 
@@ -79,20 +78,18 @@ public class CommentService {
     }
 
     private CommentResponse buildResponse(Comment comment) {
-        String username = userMapper.selectById(comment.getUserId())
-                .map(u -> u.getUsername())
-                .orElse("未知用户");
-        
+        var user = userMapper.selectById(comment.getUserId());
+        String username = user != null ? user.getUsername() : "Unknown user";
+
         String replyToUsername = null;
         if (comment.getReplyToId() != null) {
             Comment replyTo = commentMapper.selectById(comment.getReplyToId());
             if (replyTo != null) {
-                replyToUsername = userMapper.selectById(replyTo.getUserId())
-                        .map(u -> u.getUsername())
-                        .orElse("未知用户");
+                var replyUser = userMapper.selectById(replyTo.getUserId());
+                replyToUsername = replyUser != null ? replyUser.getUsername() : "Unknown user";
             }
         }
-        
+
         return CommentResponse.builder()
                 .id(comment.getId())
                 .videoId(comment.getVideoId())
